@@ -79,6 +79,7 @@
             <p class="filter-help">Можна вибрати кілька класів.</p>
             <div id="grade-options" class="grade-options"></div>
           </fieldset>
+          <div id="tag-options" class="tag-options" aria-label="Фільтри за тегами"></div>
           <button id="clear-filters" class="button quiet" type="button" disabled>Очистити фільтри</button>
         </aside>
 
@@ -88,7 +89,7 @@
           <div id="empty-state" class="empty-state" hidden>
             <p class="state-icon" aria-hidden="true">◇</p>
             <h3>Поки що тут порожньо</h3>
-            <p>Наразі немає творчих завдань для вибраних класів.</p>
+            <p id="empty-message"></p>
           </div>
         </div>
       </div>

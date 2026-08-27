@@ -4,19 +4,34 @@
   "title": "School creative catalog manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "activities"],
+  "required": ["schemaVersion", "tags", "activities"],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/tag" }
+    },
     "activities": {
       "type": "array",
       "items": { "$ref": "#/$defs/activity" }
     }
   },
   "$defs": {
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "group"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "group": { "enum": ["purpose", "topic", "format"] }
+      }
+    },
     "activity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "title", "subject", "grades", "path", "summary"],
+      "required": ["id", "title", "subject", "grades", "path", "summary", "tags"],
       "properties": {
         "id": {
           "type": "string",
@@ -39,7 +54,13 @@
           "maxLength": 160,
           "pattern": "^activities/(math|computer-science)/(0[5-9]|1[01])-[a-z0-9]+(?:-[a-z0-9]+)*/$"
         },
-        "summary": { "type": "string", "minLength": 1, "maxLength": 180 }
+        "summary": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" }
+        }
       }
     }
   }

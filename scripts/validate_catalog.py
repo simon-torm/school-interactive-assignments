@@ -20,7 +20,10 @@ CONTROL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
 CSS_URL_RE = re.compile(r"url\(\s*(['\"]?)([^)'\"]+)\1\s*\)", re.IGNORECASE)
 TEXT_EXTENSIONS = {".html", ".css", ".js", ".json", ".md", ".py", ".txt", ""}
 PUBLIC_FILES = {".nojekyll"}
-EXPECTED_RECORD_KEYS = {"id", "title", "subject", "grades", "path", "summary"}
+EXPECTED_RECORD_KEYS = {"id", "title", "subject", "grades", "path", "summary", "tags"}
+EXPECTED_TAG_KEYS = {"id", "label", "group"}
+GROUPS = ("purpose", "topic", "format")
+GROUP_RANK = {group: index for index, group in enumerate(GROUPS)}
 
 
 class DuplicateKeyError(ValueError):
@@ -55,6 +58,126 @@ class LinkCollector(HTMLParser):
                 self.targets.append(("refresh", match.group(1).strip(" '\"")))
 
 
+def validate_manifest_data(data: object, *, check_paths: bool = True, root: Path = ROOT) -> list[str]:
+    """Return all structural and semantic V2 manifest findings."""
+    findings: list[str] = []
+    if not isinstance(data, dict) or set(data) != {"schemaVersion", "tags", "activities"}:
+        return ["envelope keys must be exactly schemaVersion, tags, and activities"]
+    if data.get("schemaVersion") != 2:
+        findings.append("schemaVersion must equal 2")
+    registry = data.get("tags")
+    records = data.get("activities")
+    if not isinstance(registry, list) or not registry:
+        findings.append("tags must be a non-empty array")
+        registry = []
+    if not isinstance(records, list):
+        findings.append("activities must be an array")
+        records = []
+
+    tag_ids: list[str] = []
+    seen_labels: set[tuple[str, str]] = set()
+    for index, tag in enumerate(registry):
+        label = f"tags[{index}]"
+        if not isinstance(tag, dict) or set(tag) != EXPECTED_TAG_KEYS:
+            findings.append(f"{label}: keys do not match V2 tag contract")
+            continue
+        tag_id, text, group = tag.get("id"), tag.get("label"), tag.get("group")
+        if not isinstance(tag_id, str) or not (1 <= len(tag_id) <= 64) or not ID_RE.fullmatch(tag_id):
+            findings.append(f"{label}: invalid id")
+            continue
+        if not isinstance(text, str) or not (1 <= len(text) <= 40) or text != text.strip() or CONTROL_RE.search(text):
+            findings.append(f"{label}: invalid label")
+        if group not in GROUPS:
+            findings.append(f"{label}: invalid group")
+        if tag_id in tag_ids:
+            findings.append(f"{label}: duplicate tag id")
+        if isinstance(text, str) and isinstance(group, str) and (group, text) in seen_labels:
+            findings.append(f"{label}: duplicate group/label")
+        tag_ids.append(tag_id)
+        seen_labels.add((str(group), str(text)))
+    valid_tag_ids = set(tag_ids)
+    order_keys = [(GROUP_RANK.get(tag.get("group"), 99), str(tag.get("id", ""))) for tag in registry if isinstance(tag, dict)]
+    if order_keys != sorted(order_keys):
+        findings.append("tag registry is not in group/id order")
+
+    ids: set[str] = set()
+    paths: set[str] = set()
+    used_tags: set[str] = set()
+    sort_keys: list[tuple[int, int, str]] = []
+    tag_positions = {tag_id: index for index, tag_id in enumerate(tag_ids)}
+    for index, record in enumerate(records):
+        label = f"activities[{index}]"
+        if not isinstance(record, dict) or set(record) != EXPECTED_RECORD_KEYS:
+            findings.append(f"{label}: keys do not match V2 activity contract")
+            continue
+        activity_id = record.get("id")
+        title = record.get("title")
+        subject = record.get("subject")
+        grades = record.get("grades")
+        activity_path = record.get("path")
+        summary = record.get("summary")
+        record_tags = record.get("tags")
+        if not isinstance(activity_id, str) or not (1 <= len(activity_id) <= 64) or not ID_RE.fullmatch(activity_id):
+            findings.append(f"{label}: invalid id")
+        for field, value, maximum in (("title", title, 80), ("summary", summary, 180)):
+            if not isinstance(value, str) or not (1 <= len(value) <= maximum) or value != value.strip() or CONTROL_RE.search(value):
+                findings.append(f"{label}: invalid {field}")
+        if subject not in SUBJECTS:
+            findings.append(f"{label}: invalid subject")
+        if not isinstance(grades, list) or not (1 <= len(grades) <= 7) or any(type(grade) is not int or not 5 <= grade <= 11 for grade in grades):
+            findings.append(f"{label}: grades must be integers from 5 through 11")
+        elif grades != sorted(set(grades)):
+            findings.append(f"{label}: grades must be unique and ascending")
+        if not isinstance(record_tags, list) or not record_tags or any(not isinstance(tag_id, str) for tag_id in record_tags):
+            findings.append(f"{label}: tags must be a non-empty string array")
+        else:
+            if len(record_tags) != len(set(record_tags)):
+                findings.append(f"{label}: tags must be unique")
+            if any(tag_id not in valid_tag_ids for tag_id in record_tags):
+                findings.append(f"{label}: unknown tag")
+            positions = [tag_positions.get(tag_id, -1) for tag_id in record_tags]
+            if positions != sorted(positions):
+                findings.append(f"{label}: tags are not in registry order")
+            used_tags.update(record_tags)
+        match = PATH_RE.fullmatch(activity_path) if isinstance(activity_path, str) and len(activity_path) <= 160 else None
+        if not match:
+            findings.append(f"{label}: invalid activity path")
+            continue
+        path_subject, prefix, slug = match.groups()
+        primary_grade = int(prefix)
+        if path_subject != subject:
+            findings.append(f"{label}: path subject differs from metadata")
+        if isinstance(grades, list) and primary_grade not in grades:
+            findings.append(f"{label}: primary grade is absent from grades")
+        if slug != activity_id:
+            findings.append(f"{label}: directory slug differs from id")
+        if activity_id in ids:
+            findings.append(f"{label}: duplicate activity id")
+        if activity_path in paths:
+            findings.append(f"{label}: duplicate activity path")
+        ids.add(str(activity_id))
+        paths.add(str(activity_path))
+        if check_paths and not (root / str(activity_path) / "index.html").is_file():
+            findings.append(f"{label}: target index.html is missing")
+        if subject in SUBJECT_RANK:
+            sort_keys.append((SUBJECT_RANK[subject], primary_grade, str(activity_id)))
+    if sort_keys != sorted(sort_keys):
+        findings.append("activities are not in deterministic order")
+    unused = valid_tag_ids - used_tags
+    if unused:
+        findings.append(f"unused registry tags: {', '.join(sorted(unused))}")
+    if check_paths:
+        actual = {
+            str(path.parent.relative_to(root)).replace("\\", "/") + "/"
+            for path in root.glob("activities/*/[0-9][0-9]-*/index.html")
+        }
+        for path in sorted(actual - paths):
+            findings.append(f"orphan activity directory: {path}")
+        for path in sorted(paths - actual):
+            findings.append(f"manifest target absent from activity tree: {path}")
+    return findings
+
+
 class Validator:
     def __init__(self) -> None:
         self.errors: list[str] = []
@@ -79,87 +202,11 @@ class Validator:
         self.counts["manifest_files"] = 1
 
     def validate_manifest(self) -> None:
-        data = self.manifest
-        if not isinstance(data, dict) or set(data) != {"schemaVersion", "activities"}:
-            self.error("schema", "activities.json", "envelope keys must be exactly schemaVersion and activities")
-            return
-        if data.get("schemaVersion") != 1:
-            self.error("schema", "activities.json", "schemaVersion must equal 1")
-        records = data.get("activities")
-        if not isinstance(records, list):
-            self.error("schema", "activities.json", "activities must be an array")
-            return
-
-        ids: set[str] = set()
-        paths: set[str] = set()
-        sort_keys: list[tuple[int, int, str]] = []
-        for index, record in enumerate(records):
-            label = f"activities.json#activities[{index}]"
-            if not isinstance(record, dict) or set(record) != EXPECTED_RECORD_KEYS:
-                self.error("schema", label, "record keys do not match V1 contract")
-                continue
-            activity_id = record.get("id")
-            title = record.get("title")
-            subject = record.get("subject")
-            grades = record.get("grades")
-            activity_path = record.get("path")
-            summary = record.get("summary")
-
-            if not isinstance(activity_id, str) or not (1 <= len(activity_id) <= 64) or not ID_RE.fullmatch(activity_id):
-                self.error("schema", label, "invalid id")
-            for field, value, maximum in (("title", title, 80), ("summary", summary, 180)):
-                if not isinstance(value, str) or not (1 <= len(value) <= maximum) or value != value.strip() or CONTROL_RE.search(value):
-                    self.error("schema", label, f"invalid {field}")
-            if subject not in SUBJECTS:
-                self.error("schema", label, "invalid subject")
-            if not isinstance(grades, list) or not (1 <= len(grades) <= 7) or any(type(grade) is not int or not 5 <= grade <= 11 for grade in grades):
-                self.error("schema", label, "grades must be integers from 5 through 11")
-            elif grades != sorted(set(grades)):
-                self.error("semantic", label, "grades must be unique and ascending")
-
-            match = PATH_RE.fullmatch(activity_path) if isinstance(activity_path, str) and len(activity_path) <= 160 else None
-            if not match:
-                self.error("schema", label, "invalid activity path")
-                continue
-            path_subject, prefix, slug = match.groups()
-            primary_grade = int(prefix)
-            if path_subject != subject:
-                self.error("semantic", label, "path subject differs from metadata")
-            if isinstance(grades, list) and primary_grade not in grades:
-                self.error("semantic", label, "primary grade is absent from grades")
-            if slug != activity_id:
-                self.error("semantic", label, "directory slug differs from id")
-            if activity_id in ids:
-                self.error("semantic", label, "duplicate id")
-            if activity_path in paths:
-                self.error("semantic", label, "duplicate path")
-            ids.add(activity_id)
-            paths.add(activity_path)
-            target = (ROOT / activity_path).resolve()
-            try:
-                target.relative_to(ROOT.resolve())
-            except ValueError:
-                self.error("path", label, "path escapes repository")
-            if not (target / "index.html").is_file():
-                self.error("path", label, "target index.html is missing")
-            if subject in SUBJECT_RANK:
-                sort_keys.append((SUBJECT_RANK[subject], primary_grade, str(activity_id)))
-
-        if sort_keys != sorted(sort_keys):
-            self.error("semantic", "activities.json", "records are not in deterministic order")
-        self.counts["activity_records"] = len(records)
-
-        actual = {
-            str(path.parent.relative_to(ROOT)).replace("\\", "/") + "/"
-            for path in ROOT.glob("activities/*/[0-9][0-9]-*/index.html")
-        }
-        missing_records = actual - paths
-        missing_directories = paths - actual
-        for path in sorted(missing_records):
-            self.error("orphan", path, "activity directory is absent from manifest")
-        for path in sorted(missing_directories):
-            self.error("orphan", path, "manifest target is absent from activity tree")
-        self.counts["activity_directories"] = len(actual)
+        for finding in validate_manifest_data(self.manifest, root=ROOT):
+            self.error("schema", "activities.json", finding)
+        records = self.manifest.get("activities", []) if isinstance(self.manifest, dict) else []
+        self.counts["activity_records"] = len(records) if isinstance(records, list) else 0
+        self.counts["activity_directories"] = sum(1 for _ in ROOT.glob("activities/*/[0-9][0-9]-*/index.html"))
 
     @staticmethod
     def iter_public_files() -> list[Path]:

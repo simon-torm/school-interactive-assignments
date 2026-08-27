@@ -14,7 +14,7 @@ Then visit `http://127.0.0.1:8000/`. The catalog requires HTTP because browsers 
 
 ## Structure
 
-- `activities.json` is the catalog metadata authority.
+- `activities.json` is the V2 catalog metadata authority: one controlled tag registry plus activity records.
 - `activities/<subject>/<GG>-<id>/` contains standalone activities.
 - `assets/` contains only catalog styles and behavior.
 - `scripts/validate_catalog.py` validates metadata, paths, links, and public-safety rules.
@@ -22,9 +22,10 @@ Then visit `http://127.0.0.1:8000/`. The catalog requires HTTP because browsers 
 ## Add an activity
 
 1. Add a standalone, local-only activity at `activities/math/<GG>-<id>/` or `activities/computer-science/<GG>-<id>/`.
-2. Add its metadata to `activities.json`, keeping grades ascending and records ordered by subject, primary grade, then ID.
-3. Run `python3 scripts/validate_catalog.py`.
-4. Serve locally and test navigation, keyboard use, mobile layout, reduced motion, and network requests.
+2. Add only genuinely applicable tag IDs to its record. Add a registry entry only when at least one real activity uses it; keep registry order `purpose`, `topic`, `format`, then ASCII ID.
+3. Keep grades ascending, activity tags in registry order, and records ordered by subject, primary grade, then ID.
+4. Run `python3 scripts/test_catalog_v2.py`, `node scripts/test_catalog.js`, and `python3 scripts/validate_catalog.py`.
+5. Serve locally and test navigation, keyboard use, mobile layout, reduced motion, and network requests.
 
 ## Privacy
 
