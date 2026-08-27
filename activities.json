@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "activities": [
+    {
+      "id": "fraction-kingdom",
+      "title": "Королівство дробів",
+      "subject": "math",
+      "grades": [5, 6],
+      "path": "activities/math/06-fraction-kingdom/",
+      "summary": "Шість інтерактивних рівнів про дроби, їх порівняння, скорочення, додавання та мішані числа."
+    }
+  ]
+}

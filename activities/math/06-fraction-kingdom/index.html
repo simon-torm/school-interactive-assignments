@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Королівство Дробів</title>
+<style>
+:root{
+  --bg-deep:#241536;
+  --bg-deep2:#3a2255;
+  --panel:#3d2657;
+  --panel-light:#4c3168;
+  --cream:#fff6e8;
+  --pink:#ff6f91;
+  --pink-dark:#e0507a;
+  --mint:#7fe0c0;
+  --mint-dark:#4cc9a4;
+  --gold:#ffd166;
+  --gold-dark:#e8b23d;
+  --violet:#c8a2ff;
+  --ink:#2b1b3d;
+  --shadow: 0 8px 0 rgba(0,0,0,0.25);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:system-ui, sans-serif;
+  color:var(--cream);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255,255,255,0.08) 0, transparent 45%),
+    radial-gradient(circle at 85% 20%, rgba(255,255,255,0.06) 0, transparent 40%),
+    linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-deep2) 100%);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+h1,h2,h3,.display{
+  font-family:'Segoe UI Rounded', system-ui, sans-serif;
+}
+button{font-family:inherit;}
+#stars-bg{
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,.5), transparent),
+    radial-gradient(2px 2px at 140px 90px, rgba(255,255,255,.35), transparent),
+    radial-gradient(1.5px 1.5px at 60px 160px, rgba(255,255,255,.4), transparent),
+    radial-gradient(2px 2px at 220px 60px, rgba(255,255,255,.3), transparent),
+    radial-gradient(1.5px 1.5px at 300px 200px, rgba(255,255,255,.4), transparent),
+    radial-gradient(2px 2px at 350px 40px, rgba(255,255,255,.3), transparent);
+  background-repeat:repeat;
+  background-size:400px 260px;
+  opacity:0.7;
+}
+#app{position:relative; z-index:1; max-width:920px; margin:0 auto; padding:18px 16px 60px;}
+
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ---------- crust scallop signature ---------- */
+.crust-top{
+  height:16px;
+  background: radial-gradient(circle at 10px 0, transparent 9px, var(--gold-dark) 10px) repeat-x;
+  background-size:20px 20px;
+  border-radius:10px 10px 0 0;
+}
+.crust-bottom{
+  height:16px;
+  background: radial-gradient(circle at 10px 16px, transparent 9px, var(--gold-dark) 10px) repeat-x;
+  background-size:20px 20px;
+  border-radius:0 0 10px 10px;
+}
+
+/* ---------- header / map ---------- */
+.kingdom-title{
+  text-align:center; padding:18px 0 6px;
+}
+.kingdom-title h1{
+  font-size:2.1rem; margin:0; color:var(--gold);
+  text-shadow:0 3px 0 rgba(0,0,0,0.35);
+}
+.kingdom-title p{
+  margin:6px 0 0; color:var(--violet); font-weight:700; font-size:1rem;
+}
+
+.kingdom-road{
+  position:relative;
+  display:flex; flex-direction:column; gap:26px;
+  padding:30px 4% 10px;
+  margin-top:10px;
+}
+.kingdom-road::before{
+  content:'';
+  position:absolute; left:50%; top:0; bottom:0; width:6px;
+  background-image: linear-gradient(var(--gold) 60%, transparent 0);
+  background-size: 6px 22px;
+  background-repeat:repeat-y;
+  transform:translateX(-50%);
+  opacity:0.55;
+  border-radius:4px;
+}
+.level-node{
+  position:relative;
+  width:78%;
+  max-width:420px;
+  display:flex; align-items:center; gap:14px;
+  background:var(--panel);
+  border:none;
+  border-radius:20px;
+  padding:14px 16px;
+  box-shadow:var(--shadow);
+  cursor:pointer;
+  color:var(--cream);
+  text-align:left;
+  transition:transform .12s ease;
+}
+.level-node:hover:not(.locked){transform:translateY(-3px);}
+.level-node:active:not(.locked){transform:translateY(2px); box-shadow:0 4px 0 rgba(0,0,0,0.25);}
+.level-node.align-left{align-self:flex-start;}
+.level-node.align-right{align-self:flex-end;}
+.level-node.locked{opacity:0.5; cursor:not-allowed;}
+.level-node .badge{
+  flex:0 0 auto;
+  width:56px; height:56px; border-radius:50%;
+  background:var(--panel-light);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.8rem;
+  border:3px solid var(--gold-dark);
+}
+.level-node .info{flex:1; min-width:0;}
+.level-node .info h3{margin:0 0 2px; font-size:1.05rem; color:var(--gold);}
+.level-node .info p{margin:0; font-size:0.82rem; color:var(--cream); opacity:0.85;}
+.level-node .stars{font-size:0.9rem; margin-top:4px; letter-spacing:1px;}
+.level-node .lock-icon{position:absolute; top:8px; right:12px; font-size:1.1rem;}
+
+/* ---------- level screen ---------- */
+.level-topbar{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.btn{
+  font-family:'Segoe UI Rounded', system-ui, sans-serif;
+  font-weight:700;
+  border:none; border-radius:14px;
+  padding:10px 18px;
+  cursor:pointer;
+  box-shadow:0 5px 0 rgba(0,0,0,0.25);
+  transition:transform .08s ease, box-shadow .08s ease;
+  font-size:0.95rem;
+}
+.btn:active{transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,0.25);}
+.btn:focus-visible{outline:3px solid var(--gold); outline-offset:2px;}
+.btn-back{background:var(--panel-light); color:var(--cream);}
+.btn-primary{background:var(--pink); color:var(--ink);}
+.btn-primary:hover{background:var(--pink-dark);}
+.btn-secondary{background:var(--mint); color:var(--ink);}
+.btn-secondary:hover{background:var(--mint-dark);}
+.btn-gold{background:var(--gold); color:var(--ink);}
+.btn[disabled]{opacity:0.4; cursor:not-allowed; box-shadow:none; transform:none;}
+
+#level-title{margin:0; font-size:1.3rem; color:var(--gold); flex:1;}
+
+#round-progress{display:flex; gap:6px;}
+.dot{width:11px; height:11px; border-radius:50%; background:var(--panel-light); border:2px solid var(--gold-dark);}
+.dot.done{background:var(--mint);}
+.dot.current{background:var(--pink);}
+
+.mascot-row{display:flex; align-items:flex-start; gap:12px; margin:14px 0;}
+.mascot{
+  flex:0 0 auto; font-size:2.6rem;
+  background:var(--panel-light); border-radius:50%;
+  width:64px; height:64px; display:flex; align-items:center; justify-content:center;
+  border:3px solid var(--gold-dark);
+}
+.bubble{
+  position:relative;
+  background:var(--cream); color:var(--ink);
+  border-radius:16px; padding:12px 16px;
+  font-weight:700; font-size:0.95rem;
+  flex:1;
+  box-shadow:var(--shadow);
+}
+.bubble::before{
+  content:'';
+  position:absolute; left:-8px; top:18px;
+  border-width:8px 10px 8px 0;
+  border-style:solid;
+  border-color:transparent var(--cream) transparent transparent;
+}
+
+.stage-card{
+  background:var(--panel);
+  border-radius:0 0 18px 18px;
+  padding:20px 18px 24px;
+  position:relative;
+  overflow:visible;
+  min-height:340px;
+}
+.stage-instruction{
+  text-align:center; font-weight:700; margin-bottom:14px; color:var(--cream);
+  font-size:1rem;
+}
+.target-fraction{
+  display:flex; justify-content:center; align-items:center; gap:10px;
+  margin-bottom:14px; font-size:1.1rem; font-weight:800; color:var(--gold);
+}
+.frac{display:inline-flex; flex-direction:column; align-items:center; line-height:1.15; font-weight:800;}
+.frac .num{border-bottom:3px solid currentColor; padding:0 8px 3px;}
+.frac .den{padding:3px 8px 0;}
+
+.pie-wrap{display:flex; justify-content:center; margin:10px 0;}
+.pie-svg{filter:drop-shadow(0 4px 0 rgba(0,0,0,0.25));}
+.pie-slice{transition:fill .15s ease;}
+
+.denom-control{
+  display:flex; align-items:center; justify-content:center; gap:14px; margin:12px 0;
+  font-weight:700;
+}
+.round-btn{
+  width:38px; height:38px; border-radius:50%; border:none;
+  background:var(--gold); color:var(--ink); font-size:1.3rem; font-weight:800;
+  cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.25);
+}
+.round-btn:active{transform:translateY(3px); box-shadow:none;}
+.round-btn[disabled]{opacity:0.35; cursor:not-allowed;}
+
+.status-line{text-align:center; margin:10px 0; font-weight:700; color:var(--mint);}
+.controls-row{display:flex; justify-content:center; gap:12px; margin-top:14px; flex-wrap:wrap;}
+
+.feedback{
+  text-align:center; font-weight:800; min-height:26px; margin-top:6px;
+}
+.feedback.good{color:var(--mint);}
+.feedback.bad{color:var(--pink);}
+
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-8px);}
+  40%{transform:translateX(8px);}
+  60%{transform:translateX(-6px);}
+  80%{transform:translateX(6px);}
+}
+.shake{animation:shake .4s ease;}
+
+@keyframes pop{
+  0%{transform:scale(0.85);}
+  60%{transform:scale(1.06);}
+  100%{transform:scale(1);}
+}
+.pop{animation:pop .3s ease;}
+
+.confetti-piece{
+  position:absolute; width:8px; height:8px; border-radius:2px;
+  animation: confetti-fly .9s ease-out forwards;
+  pointer-events:none;
+}
+@keyframes confetti-fly{
+  to{ transform: translate(var(--dx), var(--dy)) rotate(360deg); opacity:0; }
+}
+
+/* number line - level 2 */
+.numberline-wrap{margin:30px 40px 50px; position:relative;}
+.numberline{
+  position:relative; height:6px; background:var(--gold-dark); border-radius:4px; margin:0;
+}
+.tick{position:absolute; top:-6px; width:2px; height:18px; background:var(--cream); opacity:0.5;}
+.tick.major{opacity:0.9; height:22px; top:-8px;}
+.tick-label{position:absolute; top:16px; transform:translateX(-50%); font-weight:800; font-size:0.85rem; color:var(--cream);}
+.chip-tray{display:flex; justify-content:center; gap:24px; margin-bottom:40px; flex-wrap:wrap;}
+.chip{
+  touch-action:none;
+  width:64px; height:64px; border-radius:50%;
+  background:var(--pink); border:3px solid var(--ink);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:0.85rem; color:var(--ink);
+  cursor:grab; user-select:none;
+  box-shadow:0 4px 0 rgba(0,0,0,0.25);
+  position:relative;
+}
+.chip.dragging{cursor:grabbing; z-index:10; box-shadow:0 8px 12px rgba(0,0,0,0.4);}
+.chip.placed-on-line{position:absolute; top:-29px; transform:translateX(-50%);}
+.compare-result{text-align:center; font-weight:800; font-size:1.2rem; margin-top:10px; color:var(--gold); min-height:28px;}
+
+/* memory match - level 3 */
+.memory-grid{
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; max-width:520px; margin:0 auto;
+}
+.mcard{
+  aspect-ratio:1/1; perspective:600px; cursor:pointer;
+}
+.mcard-inner{
+  position:relative; width:100%; height:100%; transition:transform .45s; transform-style:preserve-3d;
+}
+.mcard.flipped .mcard-inner{transform:rotateY(180deg);}
+.mcard.matched .mcard-inner{transform:rotateY(180deg);}
+.mcard-face{
+  position:absolute; inset:0; backface-visibility:hidden;
+  border-radius:12px; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:1.1rem;
+}
+.mcard-front{background:var(--panel-light); color:var(--gold); font-size:1.6rem; border:3px solid var(--gold-dark);}
+.mcard-back{background:var(--cream); color:var(--ink); transform:rotateY(180deg); border:3px solid var(--mint-dark); padding:4px;}
+.mcard.matched .mcard-back{border-color:var(--mint); box-shadow:0 0 0 3px var(--mint) inset;}
+
+/* simplify level 4 */
+.divide-row{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+.divide-btn{
+  background:var(--violet); color:var(--ink); border:none; border-radius:12px;
+  padding:10px 16px; font-weight:800; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.25);
+}
+.divide-btn:active{transform:translateY(3px); box-shadow:none;}
+
+/* add level 5 */
+.plates-row{display:flex; justify-content:center; gap:26px; align-items:center; flex-wrap:wrap; margin:12px 0;}
+.plate-block{text-align:center;}
+.plate-block .cap{font-weight:800; margin-top:6px;}
+.plus-sign, .eq-sign{font-size:2rem; font-weight:800; color:var(--gold);}
+
+/* mixed numbers level 6 */
+.donut-tray{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:14px 0; min-height:60px;}
+.donut{
+  font-size:2rem; cursor:pointer; transition:transform .15s ease;
+  filter:drop-shadow(0 3px 0 rgba(0,0,0,0.25));
+}
+.donut:hover{transform:scale(1.15);}
+.pie-slice:focus-visible,
+.mcard:focus-visible,
+.chip:focus-visible,
+.donut[role="button"]:focus-visible{
+  outline:3px solid var(--gold);
+  outline-offset:3px;
+}
+.boxes-row{display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin:14px 0;}
+.donut-box{
+  background:var(--panel-light); border:3px dashed var(--gold-dark); border-radius:14px;
+  padding:10px; min-width:90px; min-height:70px;
+  display:flex; flex-wrap:wrap; align-content:flex-start; gap:4px; justify-content:center;
+}
+.donut-box.full{border-style:solid; border-color:var(--mint);}
+.box-label{text-align:center; font-weight:800; font-size:0.8rem; margin-top:4px;}
+
+/* complete overlay */
+.overlay{
+  position:fixed; inset:0; z-index:50;
+  background:rgba(20,10,30,0.75);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+}
+.overlay.hidden{display:none;}
+.complete-card{
+  background:var(--panel); border-radius:20px; padding:0; max-width:380px; width:100%;
+  text-align:center; box-shadow:0 12px 0 rgba(0,0,0,0.3);
+  position:relative;
+  overflow:hidden;
+}
+.complete-body{padding:22px 22px 26px;}
+.complete-stars{font-size:2.4rem; letter-spacing:6px; margin:10px 0;}
+.complete-msg{font-weight:700; margin-bottom:16px;}
+.complete-buttons{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+
+@media (max-width:520px){
+  .level-node{width:88%;}
+  .memory-grid{grid-template-columns:repeat(3,1fr);}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+}
+</style>
+</head>
+<body>
+<div id="stars-bg"></div>
+<div id="app">
+
+  <div id="screen-map" class="screen active">
+    <div class="kingdom-title">
+      <h1>🏰 Королівство Дробів</h1>
+      <p>Пройди шість цехів і стань головним кондитером королівства!</p>
+    </div>
+    <div class="kingdom-road" id="kingdom-road"></div>
+  </div>
+
+  <div id="screen-level" class="screen">
+    <div class="level-topbar">
+      <button class="btn btn-back" id="btn-back">⬅ Карта</button>
+      <h2 id="level-title">—</h2>
+      <div id="round-progress"></div>
+    </div>
+    <div class="mascot-row">
+      <div class="mascot">🦊</div>
+      <div class="bubble" id="mascot-bubble">Привіт! Обери цех на карті.</div>
+    </div>
+    <div class="crust-top"></div>
+    <div class="stage-card" id="level-stage"></div>
+    <div class="crust-bottom"></div>
+  </div>
+
+</div>
+
+<div class="overlay hidden" id="overlay-complete" role="dialog" aria-modal="true" aria-labelledby="complete-title">
+  <div class="complete-card">
+    <div class="crust-top"></div>
+    <div class="complete-body">
+      <h2 id="complete-title">Цех завершено!</h2>
+      <div class="complete-stars" id="complete-stars">⭐⭐⭐</div>
+      <p class="complete-msg" id="complete-msg"></p>
+      <div class="complete-buttons" id="complete-buttons"></div>
+    </div>
+    <div class="crust-bottom"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===================== UTILITIES ===================== */
+var REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=b; b=a%b; a=t; } return a || 1; }
+function lcmOf(a,b){ return (a*b)/gcd(a,b); }
+
+function fracHTML(n,d){
+  if(d===1) return '<span class="frac-plain">'+n+'</span>';
+  return '<span class="frac"><span class="num">'+n+'</span><span class="den">'+d+'</span></span>';
+}
+
+function polarPoint(cx,cy,r,angleDeg){
+  var rad=(angleDeg-90)*Math.PI/180;
+  return { x: cx + r*Math.cos(rad), y: cy + r*Math.sin(rad) };
+}
+function sliceArcPath(cx,cy,r,a0,a1){
+  var p0=polarPoint(cx,cy,r,a1);
+  var p1=polarPoint(cx,cy,r,a0);
+  var large = (a1-a0) > 180 ? 1 : 0;
+  return 'M '+cx+' '+cy+' L '+p0.x.toFixed(2)+' '+p0.y.toFixed(2)+' A '+r+' '+r+' 0 '+large+' 0 '+p1.x.toFixed(2)+' '+p1.y.toFixed(2)+' Z';
+}
+
+/* Builds a pie SVG element. opts: n, filled(Set of indices), size, onSlice(fn), fillColor, emptyColor */
+function makePie(opts){
+  var n = opts.n, filled = opts.filled || new Set();
+  var size = opts.size || 170;
+  var fillColor = opts.fillColor || '#ff6f91';
+  var emptyColor = opts.emptyColor || '#fff6e8';
+  var stroke = opts.stroke || '#2b1b3d';
+  var onSlice = opts.onSlice || null;
+  var svgNS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(svgNS,'svg');
+  svg.setAttribute('viewBox','0 0 '+size+' '+size);
+  svg.setAttribute('width', size); svg.setAttribute('height', size);
+  svg.classList.add('pie-svg');
+  var cx=size/2, cy=size/2, r=size/2-4;
+  if(n<=1){
+    var circle=document.createElementNS(svgNS,'circle');
+    circle.setAttribute('cx',cx); circle.setAttribute('cy',cy); circle.setAttribute('r',r);
+    circle.setAttribute('fill', filled.has(0) ? fillColor : emptyColor);
+    circle.setAttribute('stroke',stroke); circle.setAttribute('stroke-width',3);
+    if(onSlice){
+      circle.style.cursor='pointer';
+      circle.setAttribute('tabindex','0');
+      circle.setAttribute('role','button');
+      circle.setAttribute('aria-label','Перемкнути частину 1 з 1');
+      circle.addEventListener('click', function(){ onSlice(0); });
+      circle.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onSlice(0); }
+      });
+    }
+    svg.appendChild(circle);
+    return svg;
+  }
+  for(var i=0;i<n;i++){
+    var a0=i*360/n, a1=(i+1)*360/n;
+    var path=document.createElementNS(svgNS,'path');
+    path.setAttribute('d', sliceArcPath(cx,cy,r,a0,a1));
+    path.setAttribute('fill', filled.has(i) ? fillColor : emptyColor);
+    path.setAttribute('stroke',stroke); path.setAttribute('stroke-width',2.5);
+    path.classList.add('pie-slice');
+    if(onSlice){
+      path.style.cursor='pointer';
+      path.setAttribute('tabindex','0');
+      path.setAttribute('role','button');
+      path.setAttribute('aria-label','Перемкнути частину '+(i+1)+' з '+n);
+      (function(idx){
+        path.addEventListener('click', function(){ onSlice(idx); });
+        path.addEventListener('keydown', function(e){
+          if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onSlice(idx); }
+        });
+      })(i);
+    }
+    svg.appendChild(path);
+  }
+  return svg;
+}
+
+function confettiBurst(container, count){
+  if(REDUCED_MOTION) return;
+  count = count || 22;
+  var colors=['#ff6f91','#ffd166','#7fe0c0','#c8a2ff','#fff6e8'];
+  var rect = container.getBoundingClientRect();
+  for(var i=0;i<count;i++){
+    var p=document.createElement('div');
+    p.className='confetti-piece';
+    p.style.left=(rect.width/2)+'px';
+    p.style.top=(rect.height/2)+'px';
+    var angle=Math.random()*Math.PI*2;
+    var dist=60+Math.random()*130;
+    var dx=Math.cos(angle)*dist, dy=Math.sin(angle)*dist - 40;
+    p.style.setProperty('--dx', dx+'px');
+    p.style.setProperty('--dy', dy+'px');
+    p.style.background=colors[rnd(0,colors.length-1)];
+    p.style.transform='rotate('+rnd(0,360)+'deg)';
+    container.appendChild(p);
+    (function(el){ setTimeout(function(){ el.remove(); }, 900); })(p);
+  }
+}
+
+function flashClass(el, cls, duration){
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+  setTimeout(function(){ el.classList.remove(cls); }, duration || 500);
+}
+
+/* ===================== LEVEL META & STATE ===================== */
+var LEVELS = [
+  { id:1, icon:'🍕', title:'Піцерія Дробів',        subtitle:'Наріж піцу й познач дріб' },
+  { id:2, icon:'🥖', title:'Кондитерська лінія',     subtitle:'Розстав дроби на лінії' },
+  { id:3, icon:'🍬', title:'Цукеркова пам\u2019ять',  subtitle:'Знайди рівні дроби' },
+  { id:4, icon:'🥐', title:'Круасанний прес',        subtitle:'Скороти дріб до простого вигляду' },
+  { id:5, icon:'🎂', title:'Кухня тортів',           subtitle:'Додай дроби та спечи торт' },
+  { id:6, icon:'🍩', title:'Коробки пончиків',       subtitle:'Знайди мішане число' }
+];
+
+var progress = {}; // {levelId: {done:bool, stars:number}}
+LEVELS.forEach(function(l){ progress[l.id] = { done:false, stars:0 }; });
+
+var currentLevelId = null;
+
+var els = {
+  screenMap: document.getElementById('screen-map'),
+  screenLevel: document.getElementById('screen-level'),
+  kingdomRoad: document.getElementById('kingdom-road'),
+  levelTitle: document.getElementById('level-title'),
+  roundProgress: document.getElementById('round-progress'),
+  mascotBubble: document.getElementById('mascot-bubble'),
+  levelStage: document.getElementById('level-stage'),
+  btnBack: document.getElementById('btn-back'),
+  overlay: document.getElementById('overlay-complete'),
+  completeTitle: document.getElementById('complete-title'),
+  completeStars: document.getElementById('complete-stars'),
+  completeMsg: document.getElementById('complete-msg'),
+  completeButtons: document.getElementById('complete-buttons')
+};
+
+function say(text){
+  els.mascotBubble.textContent = text;
+  flashClass(els.mascotBubble, 'pop', 300);
+}
+
+function isUnlocked(levelId){
+  if(levelId === 1) return true;
+  return !!(progress[levelId-1] && progress[levelId-1].done);
+}
+
+function renderMap(){
+  els.kingdomRoad.innerHTML = '';
+  LEVELS.forEach(function(level, idx){
+    var unlocked = isUnlocked(level.id);
+    var node = document.createElement('button');
+    node.className = 'level-node ' + (idx % 2 === 0 ? 'align-left' : 'align-right') + (unlocked ? '' : ' locked');
+    node.disabled = !unlocked;
+    var starsCount = progress[level.id].stars;
+    var starsStr = '';
+    for(var s=0;s<3;s++){ starsStr += (s < starsCount ? '⭐' : '☆'); }
+    node.innerHTML =
+      '<div class="badge">'+level.icon+'</div>'+
+      '<div class="info">'+
+        '<h3>'+level.title+'</h3>'+
+        '<p>'+level.subtitle+'</p>'+
+        (unlocked ? '<div class="stars">'+starsStr+'</div>' : '')+
+      '</div>'+
+      (unlocked ? '' : '<div class="lock-icon">🔒</div>');
+    if(unlocked){
+      node.addEventListener('click', function(){ openLevel(level.id); });
+    }
+    els.kingdomRoad.appendChild(node);
+  });
+}
+
+function showScreen(name){
+  els.screenMap.classList.toggle('active', name==='map');
+  els.screenLevel.classList.toggle('active', name==='level');
+}
+
+function showMap(){
+  currentLevelId = null;
+  renderMap();
+  showScreen('map');
+}
+
+function renderRoundDots(total, currentIndex){
+  els.roundProgress.innerHTML = '';
+  for(var i=0;i<total;i++){
+    var dot = document.createElement('div');
+    dot.className = 'dot' + (i < currentIndex ? ' done' : (i === currentIndex ? ' current' : ''));
+    els.roundProgress.appendChild(dot);
+  }
+}
+
+function openLevel(levelId){
+  currentLevelId = levelId;
+  var meta = LEVELS.filter(function(l){ return l.id === levelId; })[0];
+  els.levelTitle.textContent = meta.icon + ' ' + meta.title;
+  els.levelStage.innerHTML = '';
+  showScreen('level');
+  INIT_FUNCS[levelId](els.levelStage);
+}
+
+function finishLevel(levelId, mistakes){
+  var stars = mistakes <= 0 ? 3 : (mistakes <= 2 ? 2 : 1);
+  var prev = progress[levelId].stars;
+  progress[levelId] = { done:true, stars: Math.max(prev, stars) };
+
+  var msgs = {
+    3: 'Бездоганно! Жодної помилки — справжній майстер-кондитер!',
+    2: 'Чудова робота! Ще трішки практики — і буде ідеально.',
+    1: 'Цех пройдено! Спробуй ще раз, щоб отримати більше зірок.'
+  };
+  els.completeTitle.textContent = 'Цех завершено! ' + (LEVELS.filter(function(l){return l.id===levelId;})[0].icon);
+  var starsStr = '';
+  for(var s=0;s<3;s++){ starsStr += (s < stars ? '⭐' : '☆'); }
+  els.completeStars.textContent = starsStr;
+  els.completeMsg.textContent = msgs[stars];
+
+  els.completeButtons.innerHTML = '';
+  var btnRetry = document.createElement('button');
+  btnRetry.className = 'btn btn-secondary';
+  btnRetry.textContent = '🔁 Ще раз';
+  btnRetry.addEventListener('click', function(){ closeOverlay(); openLevel(levelId); });
+  els.completeButtons.appendChild(btnRetry);
+
+  var nextMeta = LEVELS.filter(function(l){ return l.id === levelId+1; })[0];
+  if(nextMeta){
+    var btnNext = document.createElement('button');
+    btnNext.className = 'btn btn-primary';
+    btnNext.textContent = 'Далі: ' + nextMeta.icon + ' →';
+    btnNext.addEventListener('click', function(){ closeOverlay(); openLevel(nextMeta.id); });
+    els.completeButtons.appendChild(btnNext);
+  }
+
+  var btnMap = document.createElement('button');
+  btnMap.className = 'btn btn-gold';
+  btnMap.textContent = '🗺 До карти';
+  btnMap.addEventListener('click', function(){ closeOverlay(); showMap(); });
+  els.completeButtons.appendChild(btnMap);
+
+  els.overlay.classList.remove('hidden');
+  var firstOverlayButton = els.completeButtons.querySelector('button');
+  if(firstOverlayButton) firstOverlayButton.focus();
+  if(!REDUCED_MOTION && stars >= 2){
+    var cardEl = els.overlay.querySelector('.complete-card');
+    confettiBurst(cardEl, 40);
+  }
+}
+
+function closeOverlay(){
+  els.overlay.classList.add('hidden');
+}
+
+els.btnBack.addEventListener('click', function(){ showMap(); });
+
+/* ===================== LEVEL 1: ПІЦЕРІЯ ДРОБІВ (побудуй дріб) ===================== */
+function initLevel1(stage){
+  var rounds = [
+    { n:4, m:3 }, { n:6, m:2 }, { n:8, m:5 }, { n:3, m:1 }, { n:10, m:7 }
+  ];
+  var roundIndex = 0;
+  var mistakes = 0;
+  var currentDenom = 0;
+  var filled = new Set();
+  var transitioning = false;
+
+  say('Наріж піцу на потрібну кількість шматків, а потім познач стільки шматків, скільки показано в чисельнику!');
+
+  function render(){
+    transitioning = false;
+    var round = rounds[roundIndex];
+    renderRoundDots(rounds.length, roundIndex);
+    stage.innerHTML =
+      '<div class="stage-instruction">Зроби дріб: скільки всього шматків і скільки з них зафарбовано?</div>'+
+      '<div class="target-fraction">🎯 Ціль: ' + fracHTML(round.m, round.n) + '</div>'+
+      '<div class="denom-control">'+
+        '<button class="round-btn" id="denom-minus">−</button>'+
+        '<span id="denom-label">Шматочків: '+currentDenom+'</span>'+
+        '<button class="round-btn" id="denom-plus">+</button>'+
+      '</div>'+
+      '<div class="pie-wrap" id="pie-holder"></div>'+
+      '<div class="status-line" id="status-line"></div>'+
+      '<div class="feedback" id="feedback"></div>'+
+      '<div class="controls-row"><button class="btn btn-primary" id="check-btn">Перевірити ✔</button></div>';
+
+    document.getElementById('denom-minus').addEventListener('click', function(){ changeDenom(-1); });
+    document.getElementById('denom-plus').addEventListener('click', function(){ changeDenom(1); });
+    document.getElementById('check-btn').addEventListener('click', checkAnswer);
+    drawPie();
+    updateStatus();
+  }
+
+  function drawPie(){
+    var holder = document.getElementById('pie-holder');
+    holder.innerHTML = '';
+    var pie = makePie({ n: currentDenom, filled: filled, size:180, onSlice: toggleSlice });
+    holder.appendChild(pie);
+  }
+
+  function updateStatus(){
+    document.getElementById('denom-label').textContent = 'Шматочків: ' + currentDenom;
+    document.getElementById('status-line').textContent = 'Зафарбовано: ' + filled.size + ' з ' + currentDenom;
+    document.getElementById('denom-minus').disabled = currentDenom <= 2;
+    document.getElementById('denom-plus').disabled = currentDenom >= 12;
+  }
+
+  function changeDenom(delta){
+    var next = currentDenom + delta;
+    if(next < 2 || next > 12) return;
+    currentDenom = next;
+    filled = new Set();
+    drawPie();
+    updateStatus();
+  }
+
+  function toggleSlice(i){
+    if(filled.has(i)) filled.delete(i); else filled.add(i);
+    drawPie();
+    updateStatus();
+  }
+
+  function checkAnswer(){
+    if(transitioning) return;
+    var round = rounds[roundIndex];
+    var fb = document.getElementById('feedback');
+    if(currentDenom === round.n && filled.size === round.m){
+      transitioning = true;
+      document.getElementById('check-btn').disabled = true;
+      fb.className = 'feedback good';
+      fb.textContent = 'Смачно і точно! Це ' + round.m + '/' + round.n + '! 🎉';
+      confettiBurst(stage, 24);
+      say('Так тримати! Наступна піца чекає.');
+      setTimeout(function(){
+        roundIndex++;
+        if(roundIndex >= rounds.length){
+          finishLevel(1, mistakes);
+        } else {
+          currentDenom = 4;
+          filled = new Set();
+          render();
+        }
+      }, 850);
+    } else {
+      mistakes++;
+      fb.className = 'feedback bad';
+      fb.textContent = 'Ще не так. Перевір: скільки всього шматків і скільки зафарбовано? 🤔';
+      flashClass(stage, 'shake', 400);
+      say('Не поспішай — порахуй шматочки ще раз.');
+    }
+  }
+
+  currentDenom = 4;
+  render();
+}
+
+/* ===================== LEVEL 2: КОНДИТЕРСЬКА ЛІНІЯ (порівняння на прямій) ===================== */
+function initLevel2(stage){
+  var rounds = [
+    { a:{n:1,d:2}, b:{n:1,d:4} },
+    { a:{n:2,d:3}, b:{n:1,d:3} },
+    { a:{n:3,d:4}, b:{n:5,d:6} },
+    { a:{n:1,d:1}, b:{n:5,d:4} },
+    { a:{n:2,d:5}, b:{n:3,d:10} }
+  ];
+  var roundIndex = 0;
+  var mistakes = 0;
+  var chipState = {};
+  var transitioning = false;
+
+  say('Перетягни обидві фішки на пряму туди, де має стояти кожен дріб.');
+
+  function fracValue(f){ return f.n / f.d; }
+
+  function render(){
+    transitioning = false;
+    var round = rounds[roundIndex];
+    renderRoundDots(rounds.length, roundIndex);
+    chipState = {
+      a: { value: fracValue(round.a), placed:false, x:null },
+      b: { value: fracValue(round.b), placed:false, x:null }
+    };
+    stage.innerHTML =
+      '<div class="stage-instruction">Перетягни фішки з тарілки на пряму — туди, де має стояти кожен дріб.</div>'+
+      '<div class="chip-tray" id="chip-tray">'+
+        '<div class="chip" id="chip-a" data-key="a">'+round.a.n+'/'+round.a.d+'</div>'+
+        '<div class="chip" id="chip-b" data-key="b">'+round.b.n+'/'+round.b.d+'</div>'+
+      '</div>'+
+      '<div class="numberline-wrap" id="line-wrap">'+
+        '<div class="numberline" id="the-line"></div>'+
+      '</div>'+
+      '<div class="feedback" id="feedback"></div>'+
+      '<div class="compare-result" id="compare-result"></div>'+
+      '<div class="controls-row"><button class="btn btn-primary" id="check-btn" disabled>Перевірити ✔</button></div>';
+
+    buildTicks();
+    setupDrag(document.getElementById('chip-a'));
+    setupDrag(document.getElementById('chip-b'));
+    document.getElementById('check-btn').addEventListener('click', checkAnswer);
+  }
+
+  function buildTicks(){
+    var wrap = document.getElementById('line-wrap');
+    for(var i=0;i<=8;i++){
+      var v = i * 0.25;
+      var isMajor = (i % 2 === 0);
+      var tick=document.createElement('div');
+      tick.className = 'tick' + (isMajor ? ' major' : '');
+      tick.style.left = (v/2*100) + '%';
+      wrap.appendChild(tick);
+      if(isMajor){
+        var label=document.createElement('div');
+        label.className='tick-label';
+        label.style.left=(v/2*100)+'%';
+        label.textContent = String(v);
+        wrap.appendChild(label);
+      }
+    }
+  }
+
+  function setupDrag(chipEl){
+    chipEl.tabIndex = 0;
+    chipEl.setAttribute('role','button');
+    chipEl.setAttribute('aria-label','Дріб '+chipEl.textContent+'. Перетягни або скористайся стрілками, щоб поставити на числову пряму.');
+    chipEl.addEventListener('keydown', function(e){
+      var key = chipEl.getAttribute('data-key');
+      var value = chipState[key].placed ? chipState[key].x : 0;
+      if(e.key === 'ArrowLeft') value -= 0.05;
+      else if(e.key === 'ArrowRight') value += 0.05;
+      else if(e.key === 'Home') value = 0;
+      else if(e.key === 'End') value = 2;
+      else return;
+      e.preventDefault();
+      value = Math.round(Math.max(0, Math.min(2, value)) * 100) / 100;
+      placeChipOnLine(chipEl, value);
+      chipEl.focus();
+    });
+    chipEl.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      chipEl.setPointerCapture(e.pointerId);
+      chipEl.classList.add('dragging');
+
+      function onMove(ev){
+        chipEl.style.position='fixed';
+        chipEl.style.left=(ev.clientX-32)+'px';
+        chipEl.style.top=(ev.clientY-32)+'px';
+        chipEl.style.margin='0';
+        chipEl.style.transform='none';
+        chipEl.style.zIndex=1000;
+      }
+      function onUp(ev){
+        chipEl.removeEventListener('pointermove', onMove);
+        chipEl.removeEventListener('pointerup', onUp);
+        chipEl.classList.remove('dragging');
+        var wrap = document.getElementById('line-wrap');
+        var wrapRect = wrap.getBoundingClientRect();
+        var withinX = ev.clientX >= wrapRect.left - 20 && ev.clientX <= wrapRect.right + 20;
+        var withinY = ev.clientY >= wrapRect.top - 50 && ev.clientY <= wrapRect.bottom + 20;
+        if(withinX && withinY){
+          var value = (ev.clientX - wrapRect.left) / wrapRect.width * 2;
+          value = Math.max(0, Math.min(2, value));
+          placeChipOnLine(chipEl, value);
+        } else {
+          returnChipToTray(chipEl);
+        }
+      }
+      chipEl.addEventListener('pointermove', onMove);
+      chipEl.addEventListener('pointerup', onUp);
+    });
+  }
+
+  function placeChipOnLine(chipEl, value){
+    var key = chipEl.getAttribute('data-key');
+    chipState[key].placed = true;
+    chipState[key].x = value;
+    var wrap = document.getElementById('line-wrap');
+    if(chipEl.parentNode !== wrap){ wrap.appendChild(chipEl); }
+    chipEl.style.position='absolute';
+    chipEl.style.zIndex=5;
+    chipEl.style.left = (value/2*100) + '%';
+    chipEl.style.top = '-29px';
+    chipEl.style.margin = '0';
+    chipEl.style.transform = 'translateX(-50%)';
+    updateCheckButton();
+  }
+
+  function returnChipToTray(chipEl){
+    var key = chipEl.getAttribute('data-key');
+    chipState[key].placed = false;
+    var tray = document.getElementById('chip-tray');
+    if(chipEl.parentNode !== tray){ tray.appendChild(chipEl); }
+    chipEl.style.position='';
+    chipEl.style.left='';
+    chipEl.style.top='';
+    chipEl.style.zIndex='';
+    chipEl.style.transform='';
+    chipEl.style.margin='';
+    updateCheckButton();
+  }
+
+  function updateCheckButton(){
+    var btn = document.getElementById('check-btn');
+    if(!btn) return;
+    btn.disabled = !(chipState.a.placed && chipState.b.placed);
+  }
+
+  function checkAnswer(){
+    if(transitioning) return;
+    var round = rounds[roundIndex];
+    var tolerance = 0.09;
+    var okA = Math.abs(chipState.a.x - chipState.a.value) <= tolerance;
+    var okB = Math.abs(chipState.b.x - chipState.b.value) <= tolerance;
+    var fb = document.getElementById('feedback');
+    var cmp = document.getElementById('compare-result');
+    if(okA && okB){
+      transitioning = true;
+      document.getElementById('check-btn').disabled = true;
+      fb.className='feedback good';
+      fb.textContent='Точно на своєму місці! 🎯';
+      var symbol = chipState.a.value > chipState.b.value ? '>' : (chipState.a.value < chipState.b.value ? '<' : '=');
+      cmp.textContent = round.a.n+'/'+round.a.d+' '+symbol+' '+round.b.n+'/'+round.b.d;
+      confettiBurst(stage, 24);
+      say('Бачиш, як тепер видно, який дріб більший?');
+      setTimeout(function(){
+        roundIndex++;
+        if(roundIndex >= rounds.length){ finishLevel(2, mistakes); }
+        else { render(); }
+      }, 1100);
+    } else {
+      mistakes++;
+      fb.className='feedback bad';
+      fb.textContent='Одна з фішок стоїть не зовсім на своєму місці. Придивись до поділок!';
+      flashClass(stage, 'shake', 400);
+      say('Порівняй фішку з поділками на прямій ще раз.');
+    }
+  }
+
+  render();
+}
+
+/* ===================== LEVEL 3: ЦУКЕРКОВА ПАМ'ЯТЬ (рівні дроби) ===================== */
+function initLevel3(stage){
+  var pairsData = [
+    { id:1, num:{n:1,d:2}, pie:{n:2,d:4} },
+    { id:2, num:{n:1,d:3}, pie:{n:2,d:6} },
+    { id:3, num:{n:3,d:4}, pie:{n:6,d:8} },
+    { id:4, num:{n:1,d:4}, pie:{n:2,d:8} },
+    { id:5, num:{n:2,d:3}, pie:{n:4,d:6} },
+    { id:6, num:{n:1,d:5}, pie:{n:2,d:10} }
+  ];
+  var mistakes = 0;
+  var firstCard = null;
+  var lockBoard = false;
+  var matchedCount = 0;
+
+  say('Знайди пари карток, що показують однакове значення дробу — цифрами й малюнком!');
+
+  renderRoundDots(1, 0);
+
+  var cards = [];
+  pairsData.forEach(function(p){
+    cards.push({ pairId:p.id, type:'num', n:p.num.n, d:p.num.d });
+    cards.push({ pairId:p.id, type:'pie', n:p.pie.n, d:p.pie.d });
+  });
+  // shuffle
+  for(var i=cards.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp = cards[i]; cards[i]=cards[j]; cards[j]=tmp;
+  }
+
+  stage.innerHTML =
+    '<div class="stage-instruction">Клікни дві картки: одна з числом, інша з малюнком тієї ж величини.</div>'+
+    '<div class="memory-grid" id="memory-grid"></div>'+
+    '<div class="feedback" id="feedback"></div>';
+
+  var grid = document.getElementById('memory-grid');
+  cards.forEach(function(card, idx){
+    var cardEl = document.createElement('div');
+    cardEl.className = 'mcard';
+    cardEl.dataset.idx = idx;
+    cardEl.tabIndex = 0;
+    cardEl.setAttribute('role','button');
+    cardEl.setAttribute('aria-label','Закрита картка '+(idx+1));
+    cardEl.innerHTML =
+      '<div class="mcard-inner">'+
+        '<div class="mcard-face mcard-front">?</div>'+
+        '<div class="mcard-face mcard-back" id="back-'+idx+'"></div>'+
+      '</div>';
+    grid.appendChild(cardEl);
+    var backEl = cardEl.querySelector('.mcard-back');
+    if(card.type === 'num'){
+      backEl.innerHTML = fracHTML(card.n, card.d);
+    } else {
+      var filled = new Set();
+      for(var k=0;k<card.n;k++){ filled.add(k); }
+      var pie = makePie({ n: card.d, filled: filled, size:70, fillColor:'#ff6f91', emptyColor:'#fff' });
+      backEl.appendChild(pie);
+    }
+    cardEl.addEventListener('click', function(){ onCardClick(idx, cardEl, card); });
+    cardEl.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onCardClick(idx, cardEl, card); }
+    });
+  });
+
+  function onCardClick(idx, cardEl, card){
+    if(lockBoard) return;
+    if(cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+    cardEl.classList.add('flipped');
+
+    if(!firstCard){
+      firstCard = { idx:idx, el:cardEl, card:card };
+      return;
+    }
+    lockBoard = true;
+    var second = { idx:idx, el:cardEl, card:card };
+    var isMatch = firstCard.card.pairId === second.card.pairId && firstCard.idx !== second.idx;
+
+    if(isMatch){
+      firstCard.el.classList.add('matched');
+      second.el.classList.add('matched');
+      matchedCount++;
+      confettiBurst(stage, 14);
+      say('Так, це та сама величина! Ще трохи — і всі пари знайдені.');
+      firstCard = null;
+      lockBoard = false;
+      if(matchedCount === pairsData.length){
+        setTimeout(function(){ finishLevel(3, mistakes); }, 700);
+      }
+    } else {
+      mistakes++;
+      var fb = document.getElementById('feedback');
+      fb.className = 'feedback bad';
+      fb.textContent = 'Це різні величини. Спробуй ще!';
+      flashClass(stage, 'shake', 350);
+      setTimeout(function(){
+        firstCard.el.classList.remove('flipped');
+        second.el.classList.remove('flipped');
+        firstCard = null;
+        lockBoard = false;
+        fb.textContent = '';
+      }, 750);
+    }
+  }
+}
+
+/* ===================== LEVEL 4: КРУАСАННИЙ ПРЕС (скорочення дробів) ===================== */
+function initLevel4(stage){
+  var rounds = [
+    { n:4, d:8 }, { n:6, d:9 }, { n:8, d:12 }, { n:9, d:15 }, { n:10, d:12 }
+  ];
+  var roundIndex = 0;
+  var mistakes = 0;
+  var curN, curD;
+
+  say('Знайди число, на яке діляться порівну і чисельник, і знаменник — і натисни, щоб скоротити дріб!');
+
+  function validDivisors(n, d){
+    var list = [];
+    for(var k=2;k<=6;k++){ if(n % k === 0 && d % k === 0) list.push(k); }
+    return list;
+  }
+  function findDistractor(n, d, exclude){
+    for(var k=2;k<=6;k++){
+      if(exclude.indexOf(k) !== -1) continue;
+      var divN = (n % k === 0), divD = (d % k === 0);
+      if((divN || divD) && !(divN && divD)) return k;
+    }
+    return null;
+  }
+
+  function render(){
+    renderRoundDots(rounds.length, roundIndex);
+    var valid = validDivisors(curN, curD);
+    var isSimplest = valid.length === 0;
+    var buttons = valid.slice();
+    var distractor = null;
+    if(!isSimplest){
+      distractor = findDistractor(curN, curD, valid);
+      if(distractor !== null) buttons.push(distractor);
+      // shuffle buttons
+      for(var i=buttons.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=buttons[i]; buttons[i]=buttons[j]; buttons[j]=t; }
+    }
+
+    stage.innerHTML =
+      '<div class="stage-instruction">Скороти дріб до найпростішого вигляду.</div>'+
+      '<div class="target-fraction">Поточний дріб: ' + fracHTML(curN, curD) + '</div>'+
+      '<div class="pie-wrap" id="pie-holder"></div>'+
+      '<div class="status-line" id="status-line">'+(isSimplest ? 'Це вже найпростіший вигляд! 🎉' : 'На яке число можна поділити і чисельник, і знаменник?')+'</div>'+
+      '<div class="divide-row" id="divide-row"></div>'+
+      '<div class="feedback" id="feedback"></div>';
+
+    var holder = document.getElementById('pie-holder');
+    var filled = new Set();
+    for(var f=0; f<curN; f++){ filled.add(f); }
+    holder.appendChild(makePie({ n: curD, filled: filled, size:170, fillColor:'#c8a2ff' }));
+
+    var row = document.getElementById('divide-row');
+    if(isSimplest){
+      var doneBtn = document.createElement('button');
+      doneBtn.className = 'btn btn-primary';
+      doneBtn.textContent = 'Наступний дріб →';
+      doneBtn.addEventListener('click', nextRound);
+      row.appendChild(doneBtn);
+      confettiBurst(stage, 20);
+      say('Супер! Далі, коли gcd = 1, скорочувати вже нема куди.');
+    } else {
+      buttons.forEach(function(k){
+        var b = document.createElement('button');
+        b.className = 'divide-btn';
+        b.textContent = '÷ ' + k;
+        b.addEventListener('click', function(){ onDivide(k); });
+        row.appendChild(b);
+      });
+    }
+  }
+
+  function onDivide(k){
+    if(curN % k === 0 && curD % k === 0){
+      curN = curN / k;
+      curD = curD / k;
+      render();
+    } else {
+      mistakes++;
+      var fb = document.getElementById('feedback');
+      fb.className = 'feedback bad';
+      fb.textContent = 'Ні, ' + k + ' ділить не обидва числа порівну. Перевір ще раз!';
+      flashClass(stage, 'shake', 400);
+      say('Перевір: чи ділиться і чисельник, і знаменник на це число без остачі?');
+    }
+  }
+
+  function nextRound(){
+    roundIndex++;
+    if(roundIndex >= rounds.length){
+      finishLevel(4, mistakes);
+    } else {
+      curN = rounds[roundIndex].n;
+      curD = rounds[roundIndex].d;
+      render();
+    }
+  }
+
+  curN = rounds[0].n;
+  curD = rounds[0].d;
+  render();
+}
+
+/* ===================== LEVEL 5: КУХНЯ ТОРТІВ (додавання дробів) ===================== */
+function initLevel5(stage){
+  var rounds = [
+    { a:{n:2,d:5}, b:{n:2,d:5} },
+    { a:{n:1,d:4}, b:{n:2,d:4} },
+    { a:{n:3,d:4}, b:{n:2,d:4} },
+    { a:{n:1,d:2}, b:{n:1,d:3} },
+    { a:{n:3,d:4}, b:{n:1,d:6} }
+  ];
+  var roundIndex = 0;
+  var workingA, workingB;
+
+  say('Спочатку зроби однакові знаменники (якщо треба), а потім з\u2019єднай тарілки, щоб додати дроби!');
+
+  function render(){
+    renderRoundDots(rounds.length, roundIndex);
+    var round = rounds[roundIndex];
+    workingA = { n: round.a.n, d: round.a.d };
+    workingB = { n: round.b.n, d: round.b.d };
+    var sameDenom = workingA.d === workingB.d;
+
+    stage.innerHTML =
+      '<div class="stage-instruction">Додай два дроби, крок за кроком.</div>'+
+      '<div class="plates-row">'+
+        '<div class="plate-block"><div id="plateA-holder"></div><div class="cap" id="plateA-label"></div></div>'+
+        '<div class="plus-sign">+</div>'+
+        '<div class="plate-block"><div id="plateB-holder"></div><div class="cap" id="plateB-label"></div></div>'+
+      '</div>'+
+      '<div class="controls-row" id="tool-row"></div>'+
+      '<div class="plates-row" id="result-row"></div>'+
+      '<div class="feedback" id="feedback"></div>'+
+      '<div class="controls-row" id="next-row"></div>';
+
+    drawPlates();
+    buildTools(sameDenom);
+  }
+
+  function drawPlates(){
+    var holderA = document.getElementById('plateA-holder');
+    var holderB = document.getElementById('plateB-holder');
+    holderA.innerHTML=''; holderB.innerHTML='';
+    var setA = new Set(); for(var i=0;i<workingA.n;i++) setA.add(i);
+    var setB = new Set(); for(var j=0;j<workingB.n;j++) setB.add(j);
+    holderA.appendChild(makePie({ n: workingA.d, filled:setA, size:130, fillColor:'#ffd166' }));
+    holderB.appendChild(makePie({ n: workingB.d, filled:setB, size:130, fillColor:'#7fe0c0' }));
+    document.getElementById('plateA-label').innerHTML = fracHTML(workingA.n, workingA.d);
+    document.getElementById('plateB-label').innerHTML = fracHTML(workingB.n, workingB.d);
+  }
+
+  function buildTools(sameDenom){
+    var row = document.getElementById('tool-row');
+    row.innerHTML = '';
+    if(!sameDenom){
+      var btnCommon = document.createElement('button');
+      btnCommon.className = 'btn btn-secondary';
+      btnCommon.textContent = '🔗 Спільний знаменник';
+      btnCommon.addEventListener('click', onCommonDenom);
+      row.appendChild(btnCommon);
+    } else {
+      var btnMerge = document.createElement('button');
+      btnMerge.className = 'btn btn-primary';
+      btnMerge.textContent = '🍰 З\u2019єднати';
+      btnMerge.addEventListener('click', onMerge);
+      row.appendChild(btnMerge);
+    }
+  }
+
+  function onCommonDenom(){
+    var L = lcmOf(workingA.d, workingB.d);
+    workingA = { n: workingA.n * (L / workingA.d), d: L };
+    workingB = { n: workingB.n * (L / workingB.d), d: L };
+    drawPlates();
+    flashClass(stage, 'pop', 300);
+    say('Тепер у обох тарілок однакова кількість шматочків — можна єднати!');
+    buildTools(true);
+  }
+
+  function onMerge(){
+    var sumN = workingA.n + workingB.n;
+    var D = workingA.d;
+    var resultRow = document.getElementById('result-row');
+    resultRow.innerHTML = '<div class="eq-sign">=</div>';
+
+    if(sumN <= D){
+      var block = document.createElement('div');
+      block.className = 'plate-block';
+      var setR = new Set(); for(var i=0;i<sumN;i++) setR.add(i);
+      block.appendChild(makePie({ n:D, filled:setR, size:140, fillColor:'#ff6f91' }));
+      var cap = document.createElement('div');
+      cap.className = 'cap';
+      var g = gcd(sumN, D);
+      cap.innerHTML = fracHTML(sumN, D) + (g > 1 ? ('&nbsp;=&nbsp;' + fracHTML(sumN/g, D/g)) : '');
+      block.appendChild(cap);
+      resultRow.appendChild(block);
+      say('Готово! Ось скільки торта вийшло разом.');
+    } else {
+      var whole = Math.floor(sumN / D);
+      var remainder = sumN % D;
+
+      var block1 = document.createElement('div');
+      block1.className = 'plate-block';
+      var setFull = new Set(); for(var k=0;k<D;k++) setFull.add(k);
+      block1.appendChild(makePie({ n:D, filled:setFull, size:110, fillColor:'#ff6f91' }));
+      var cap1 = document.createElement('div'); cap1.className='cap'; cap1.textContent = whole + ' цілий';
+      block1.appendChild(cap1);
+      resultRow.appendChild(block1);
+
+      if(remainder > 0){
+        var plus2 = document.createElement('div'); plus2.className='plus-sign'; plus2.textContent='+';
+        resultRow.appendChild(plus2);
+        var block2 = document.createElement('div');
+        block2.className = 'plate-block';
+        var setR2 = new Set(); for(var r=0;r<remainder;r++) setR2.add(r);
+        block2.appendChild(makePie({ n:D, filled:setR2, size:110, fillColor:'#ff6f91' }));
+        var cap2 = document.createElement('div'); cap2.className='cap'; cap2.innerHTML = fracHTML(remainder, D);
+        block2.appendChild(cap2);
+        resultRow.appendChild(block2);
+      }
+      var note = document.createElement('div');
+      note.className = 'cap';
+      note.style.width = '100%';
+      note.style.marginTop = '8px';
+      note.innerHTML = 'Разом: ' + sumN + '/' + D + ' &nbsp;=&nbsp; ' + whole + (remainder>0 ? (' і ' + fracHTML(remainder, D)) : '');
+      resultRow.appendChild(note);
+      say('Дріб більший за цілий торт — тому вийшло мішане число!');
+    }
+
+    confettiBurst(stage, 26);
+    document.getElementById('tool-row').innerHTML = '';
+    var nextRow = document.getElementById('next-row');
+    nextRow.innerHTML = '';
+    var btnNext = document.createElement('button');
+    btnNext.className = 'btn btn-gold';
+    btnNext.textContent = roundIndex < rounds.length-1 ? 'Наступний раунд →' : 'Завершити цех 🎉';
+    btnNext.addEventListener('click', nextRound);
+    nextRow.appendChild(btnNext);
+  }
+
+  function nextRound(){
+    roundIndex++;
+    if(roundIndex >= rounds.length){
+      finishLevel(5, 0);
+    } else {
+      render();
+    }
+  }
+
+  render();
+}
+
+/* ===================== LEVEL 6: КОРОБКИ ПОНЧИКІВ (мішані числа) ===================== */
+function initLevel6(stage){
+  var rounds = [
+    { n:7, d:3 }, { n:9, d:4 }, { n:11, d:5 }, { n:5, d:2 }, { n:13, d:6 }
+  ];
+  var roundIndex = 0;
+  var trayCount, d, boxes;
+
+  say('Клікай на пончики й розкладай їх по коробках! Коли коробка заповнена — вона стає цілою.');
+
+  function render(){
+    renderRoundDots(rounds.length, roundIndex);
+    var round = rounds[roundIndex];
+    d = round.d;
+    trayCount = round.n;
+    var boxCount = Math.ceil(round.n / d);
+    boxes = [];
+    for(var i=0;i<boxCount;i++){ boxes.push(0); }
+
+    stage.innerHTML =
+      '<div class="stage-instruction">У кожній коробці '+d+' пончики — заповни коробки, щоб дізнатись мішане число для '+round.n+'/'+d+'.</div>'+
+      '<div class="donut-tray" id="tray"></div>'+
+      '<div class="boxes-row" id="boxes-row"></div>'+
+      '<div class="status-line" id="status-line"></div>'+
+      '<div class="feedback" id="feedback"></div>'+
+      '<div class="controls-row" id="next-row"></div>';
+
+    drawTray();
+    drawBoxes();
+    updateStatus();
+  }
+
+  function drawTray(){
+    var tray = document.getElementById('tray');
+    tray.innerHTML = '';
+    for(var i=0;i<trayCount;i++){
+      var span = document.createElement('span');
+      span.className = 'donut';
+      span.textContent = '🍩';
+      span.tabIndex = 0;
+      span.setAttribute('role','button');
+      span.setAttribute('aria-label','Покласти пончик у наступну коробку');
+      span.addEventListener('click', onDonutClick);
+      span.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onDonutClick(e); }
+      });
+      tray.appendChild(span);
+    }
+  }
+
+  function drawBoxes(){
+    var row = document.getElementById('boxes-row');
+    row.innerHTML = '';
+    boxes.forEach(function(count, idx){
+      var wrap = document.createElement('div');
+      var box = document.createElement('div');
+      box.className = 'donut-box' + (count === d ? ' full' : '');
+      for(var k=0;k<count;k++){
+        var sp = document.createElement('span');
+        sp.className = 'donut';
+        sp.textContent = '🍩';
+        box.appendChild(sp);
+      }
+      wrap.appendChild(box);
+      var label = document.createElement('div');
+      label.className = 'box-label';
+      label.textContent = 'Коробка ' + (idx+1) + ': ' + count + '/' + d + (count === d ? ' ✔' : '');
+      wrap.appendChild(label);
+      row.appendChild(wrap);
+    });
+  }
+
+  function updateStatus(){
+    var whole = 0, remainder = 0;
+    boxes.forEach(function(c){ if(c === d) whole++; else remainder = c; });
+    var status = document.getElementById('status-line');
+    var tray = document.getElementById('tray');
+    if(tray.children.length === 0){
+      status.textContent = 'Готово! ' + trayCount + '/' + d + ' = ' + whole + (remainder>0 ? (' і ' + remainder + '/' + d) : '');
+      var nextRow = document.getElementById('next-row');
+      var btn = document.createElement('button');
+      btn.className = 'btn btn-gold';
+      btn.textContent = roundIndex < rounds.length-1 ? 'Наступна коробка пончиків →' : 'Завершити цех 🎉';
+      btn.addEventListener('click', nextRound);
+      nextRow.innerHTML = '';
+      nextRow.appendChild(btn);
+      confettiBurst(stage, 26);
+      say('Ціла коробка = ціле число, а решта пончиків — це дріб-залишок!');
+    } else {
+      status.textContent = 'Цілих коробок: ' + whole + '   Залишилось пончиків у таці: ' + tray.children.length;
+    }
+  }
+
+  function onDonutClick(e){
+    var targetBoxIdx = -1;
+    for(var i=0;i<boxes.length;i++){ if(boxes[i] < d){ targetBoxIdx = i; break; } }
+    if(targetBoxIdx === -1) return;
+    boxes[targetBoxIdx]++;
+    e.target.remove();
+    drawBoxes();
+    updateStatus();
+  }
+
+  function nextRound(){
+    roundIndex++;
+    if(roundIndex >= rounds.length){
+      finishLevel(6, 0);
+    } else {
+      render();
+    }
+  }
+
+  render();
+}
+
+/* ===================== BOOT ===================== */
+var INIT_FUNCS = {
+  1: initLevel1,
+  2: initLevel2,
+  3: initLevel3,
+  4: initLevel4,
+  5: initLevel5,
+  6: initLevel6
+};
+
+showMap();
+
+})();
+</script>
+</body>
+</html>

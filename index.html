@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Інтерактивні завдання з математики та інформатики для 5–11 класів.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; media-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Творча лабораторія — інтерактивні завдання</title>
+  <link rel="stylesheet" href="assets/catalog.css">
+  <script src="assets/catalog.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти до основного вмісту</a>
+  <header class="site-header">
+    <div class="header-orbit" aria-hidden="true"></div>
+    <div class="header-content">
+      <p class="eyebrow">Навчайся через відкриття</p>
+      <h1>Творча лабораторія</h1>
+      <p class="intro">Обери предмет і досліджуй інтерактивні завдання у власному темпі.</p>
+    </div>
+  </header>
+
+  <main id="main" class="page-shell">
+    <section id="loading-view" class="state-panel" aria-live="polite">
+      <span class="loader" aria-hidden="true"></span>
+      <p>Завантажуємо завдання…</p>
+    </section>
+
+    <section id="error-view" class="state-panel error-panel" hidden aria-labelledby="error-title">
+      <p class="state-icon" aria-hidden="true">✦</p>
+      <h2 id="error-title">Не вдалося відкрити каталог</h2>
+      <p>Спробуй ще раз. Якщо проблема не зникне, повернися трохи пізніше.</p>
+      <button id="retry-button" class="button primary" type="button">Спробувати знову</button>
+    </section>
+
+    <section id="chooser-view" hidden aria-labelledby="chooser-title">
+      <div class="section-heading">
+        <p class="step-label">Крок 1</p>
+        <h2 id="chooser-title" tabindex="-1">Що досліджуємо сьогодні?</h2>
+        <p>Кожен предмет відкриває власну колекцію творчих завдань.</p>
+      </div>
+      <nav class="subject-grid" aria-label="Вибір предмета">
+        <button class="subject-card subject-math" type="button" data-subject="math">
+          <span class="subject-symbol" aria-hidden="true">π</span>
+          <span class="subject-copy">
+            <strong>Математика</strong>
+            <span>Числа, форми, закономірності</span>
+            <span class="subject-count" data-count-for="math"></span>
+          </span>
+          <span class="subject-arrow" aria-hidden="true">→</span>
+        </button>
+        <button class="subject-card subject-cs" type="button" data-subject="computer-science">
+          <span class="subject-symbol" aria-hidden="true">{ }</span>
+          <span class="subject-copy">
+            <strong>Інформатика</strong>
+            <span>Алгоритми, логіка, технології</span>
+            <span class="subject-count" data-count-for="computer-science"></span>
+          </span>
+          <span class="subject-arrow" aria-hidden="true">→</span>
+        </button>
+      </nav>
+    </section>
+
+    <section id="catalog-view" hidden aria-labelledby="catalog-title">
+      <button id="back-button" class="back-button" type="button">← Обрати інший предмет</button>
+      <div class="catalog-heading">
+        <div>
+          <p class="step-label">Крок 2</p>
+          <h2 id="catalog-title" tabindex="-1"></h2>
+          <p id="catalog-description"></p>
+        </div>
+        <div id="subject-mark" class="subject-mark" aria-hidden="true"></div>
+      </div>
+
+      <div class="catalog-layout">
+        <aside class="filters" aria-label="Фільтри каталогу">
+          <fieldset>
+            <legend>Обери клас</legend>
+            <p class="filter-help">Можна вибрати кілька класів.</p>
+            <div id="grade-options" class="grade-options"></div>
+          </fieldset>
+          <button id="clear-filters" class="button quiet" type="button" disabled>Очистити фільтри</button>
+        </aside>
+
+        <div class="results">
+          <p id="result-count" class="result-count" aria-live="polite"></p>
+          <div id="activity-grid" class="activity-grid"></div>
+          <div id="empty-state" class="empty-state" hidden>
+            <p class="state-icon" aria-hidden="true">◇</p>
+            <h3>Поки що тут порожньо</h3>
+            <p>Наразі немає творчих завдань для вибраних класів.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <noscript>
+      <section class="state-panel error-panel">
+        <h2>Потрібен JavaScript</h2>
+        <p>Увімкни JavaScript у браузері, щоб переглядати й фільтрувати завдання.</p>
+      </section>
+    </noscript>
+  </main>
+
+  <footer class="site-footer">
+    <p>Без реєстрації, реклами та відстеження. Лише навчання.</p>
+  </footer>
+</body>
+</html>
