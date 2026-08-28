@@ -50,6 +50,14 @@ function checkGame(seed) {
   assert.ok(equation.answer >= 2 && equation.answer <= 20);
   assert.ok(equation.data.multiplier >= 2 && equation.data.multiplier <= 9);
   assert.ok(equation.data.offset >= 1 && equation.data.offset <= 30);
+  assert.equal(
+    equation.prompt,
+    `У резервуарі було ${equation.data.offset} л пального. Додали ${equation.data.multiplier} однакових каністр і отримали ${equation.data.result} л. Скільки літрів у кожній каністрі? Рівняння: ${equation.data.multiplier}x + ${equation.data.offset} = ${equation.data.result}.`,
+    `${seed}: equation story and displayed equation use the generated parameters`
+  );
+  assert.equal(equation.answer, (equation.data.result - equation.data.offset) / equation.data.multiplier);
+  assert.match(equation.hint, new RegExp(`відніми ${equation.data.offset}.*поділи.*${equation.data.multiplier}`));
+  assert.match(equation.diagnostic, /віднімання, потім ділення/);
 }
 
 boundarySeeds.forEach(checkGame);
@@ -122,8 +130,8 @@ assert.equal((html.match(/Розв’яжи 6 завдань — кожна пр
 assert.equal((html.match(/Завдання 1 з 6/g) || []).length, 1, 'one progress label');
 for (const action of ['Перевірити', 'Підказка', 'Далі', 'Нова гра']) assert.match(html, new RegExp(`>${action}<`));
 assert.match(html, /default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; connect-src 'none'/);
-assert.match(html, /lighthouse-base\.webp/);
-assert.match(html, /class="window-light window-light-5"/);
+assert.match(html, /class="scene-image scene-image-current" src="lighthouse-0\.webp"/);
+assert.match(html, /class="scene-image scene-image-next" src="lighthouse-0\.webp"/);
 assert.match(app, /function focusAnswer\(field\)/, 'incorrect responses return focus to an answer control');
 assert.match(app, /focusAnswer\(result\.field\)/, 'multi-field errors focus the relevant answer');
 assert.match(app, /elements\['activity-context'\]\.hidden = true/, 'finale and failure hide the setup context');
@@ -138,9 +146,5 @@ assert.doesNotMatch(`${html}\n${app}\n${css}`, /https?:\/\//);
 for (const obsolete of ['Поточна станція', 'Маршрут', 'система маяка', 'експедиція', 'контрольна кімната', 'Іскра', 'підсумок']) {
   assert.doesNotMatch(`${html}\n${app}`, new RegExp(obsolete, 'i'), `obsolete concept: ${obsolete}`);
 }
-
-const asset = path.join(root, 'lighthouse-base.webp');
-assert.equal(fs.existsSync(asset), true, 'local image exists');
-assert.ok(fs.statSync(asset).size <= 700 * 1024, 'local image is at most 700KB');
 
 console.log('PASS: six-family generator, scorer, slice lifecycle, static privacy and UX contracts across 10,000 seeds');

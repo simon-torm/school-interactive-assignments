@@ -3,87 +3,36 @@
   isolation: isolate;
   overflow: hidden;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1672 / 941;
   background: #12375f;
 }
 
-.lighthouse-scene > img {
+.scene-image {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-.window-light,
-.lantern-light,
-.beam {
-  position: absolute;
-  pointer-events: none;
-  opacity: 0;
+.scene-image-current {
+  z-index: 1;
 }
 
-.window-light {
-  z-index: 3;
-  left: 77.65%;
-  width: 1.55%;
-  aspect-ratio: .7;
-  background: #ffd56a;
-  border: max(1px, .12vw) solid #59401d;
-  border-radius: 50% 50% 14% 14%;
-  box-shadow: 0 0 .7rem .22rem rgba(255, 208, 82, .72);
-  transform: translate(-50%, -50%) scale(.78);
-  transition: opacity .38s ease-out, transform .38s ease-out;
-}
-
-.window-light-1 { top: 32%; }
-.window-light-2 { top: 41.65%; }
-.window-light-3 { top: 51.55%; }
-.window-light-4 { top: 61.45%; }
-.window-light-5 { top: 71.85%; }
-
-.window-light[data-lit="true"] {
-  opacity: .98;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.lantern-light {
-  z-index: 3;
-  left: 78.2%;
-  top: 16.7%;
-  width: 8.4%;
-  height: 9.2%;
-  background: radial-gradient(ellipse, rgba(255, 223, 122, .9), rgba(255, 202, 76, .5) 45%, transparent 72%);
-  transform: translate(-50%, -50%) scale(.82);
-  transition: opacity .45s ease-out, transform .45s ease-out;
-}
-
-.lantern-light[data-lit="true"] {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.beam {
+.scene-image-next {
   z-index: 2;
-  right: 22%;
-  top: 10.8%;
-  width: 72%;
-  height: 22%;
-  background: linear-gradient(90deg, rgba(255, 226, 132, 0), rgba(255, 226, 132, .22) 34%, rgba(255, 226, 132, .72));
-  clip-path: polygon(0 36%, 100% 2%, 100% 98%, 0 64%);
-  transform: rotate(-3deg) scaleX(.88);
-  transform-origin: right center;
-  transition: opacity .55s ease-out, transform .55s ease-out;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .52s ease-in-out;
 }
 
-.beam[data-lit="true"] {
-  opacity: .7;
-  transform: rotate(-3deg) scaleX(1);
+.scene-image-next.is-visible {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .window-light,
-  .lantern-light,
-  .beam {
+  .scene-image-next {
     transition: none;
   }
 }

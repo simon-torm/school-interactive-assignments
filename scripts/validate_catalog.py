@@ -25,7 +25,7 @@ EXPECTED_RECORD_KEYS = {"id", "title", "subject", "grades", "path", "summary", "
 EXPECTED_TAG_KEYS = {"id", "label", "group"}
 GROUPS = ("purpose", "topic", "format")
 GROUP_RANK = {group: index for index, group in enumerate(GROUPS)}
-LEGACY_PATH_GRADE = {"grade5-lighthouse": 5}
+LEGACY_PATH_GRADE_BY_ACTIVITY_ID = {"grade5-lighthouse": 5}
 
 
 def is_allowed_public_file(path: Path) -> bool:
@@ -153,7 +153,7 @@ def validate_manifest_data(data: object, *, check_paths: bool = True, root: Path
         primary_grade = int(prefix)
         if path_subject != subject:
             findings.append(f"{label}: path subject differs from metadata")
-        metadata_grade = LEGACY_PATH_GRADE.get(str(activity_id), primary_grade)
+        metadata_grade = LEGACY_PATH_GRADE_BY_ACTIVITY_ID.get(str(activity_id), primary_grade)
         if isinstance(grades, list) and metadata_grade not in grades:
             findings.append(f"{label}: primary grade is absent from grades")
         if slug != activity_id:

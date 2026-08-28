@@ -142,7 +142,7 @@
     const result = multiplier * answer + offset;
     return {
       id: 'equation', type: 'integer',
-      prompt: `Розв’яжи рівняння: ${multiplier}x + ${offset} = ${result}.`,
+      prompt: `У резервуарі було ${offset} л пального. Додали ${multiplier} однакових каністр і отримали ${result} л. Скільки літрів у кожній каністрі? Рівняння: ${multiplier}x + ${offset} = ${result}.`,
       hint: `Спочатку відніми ${offset}, а потім поділи результат на ${multiplier}.`,
       diagnostic: 'Перевір обернені дії: спочатку віднімання, потім ділення.',
       answer, data: { multiplier, offset, result }

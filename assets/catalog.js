@@ -13,6 +13,7 @@
   const TAG_KEYS = ['group', 'id', 'label'];
   const GROUPS = ['purpose', 'topic', 'format'];
   const GROUP_LABELS = { purpose: 'Мета', topic: 'Тема', format: 'Формат' };
+  const LEGACY_PATH_GRADE_BY_ACTIVITY_ID = Object.freeze({ 'grade5-lighthouse': 5 });
 
   function filterActivities(items, selected) {
     return items.filter((activity) => activity.subject === selected.subject
@@ -137,7 +138,9 @@
       activity.tags.forEach((tag) => usedTags.add(tag));
       if (typeof activity.path !== 'string' || activity.path.length > 160) throw new Error('Invalid path');
       const pathMatch = activity.path.match(PATH_PATTERN);
-      if (!pathMatch || pathMatch[1] !== activity.subject || pathMatch[3] !== activity.id || !activity.grades.includes(Number(pathMatch[2]))) throw new Error('Invalid path metadata');
+      const pathGrade = pathMatch ? Number(pathMatch[2]) : null;
+      const metadataGrade = LEGACY_PATH_GRADE_BY_ACTIVITY_ID[activity.id] ?? pathGrade;
+      if (!pathMatch || pathMatch[1] !== activity.subject || pathMatch[3] !== activity.id || !activity.grades.includes(metadataGrade)) throw new Error('Invalid path metadata');
       if (ids.has(activity.id) || paths.has(activity.path)) throw new Error('Duplicate activity');
       ids.add(activity.id);
       paths.add(activity.path);
