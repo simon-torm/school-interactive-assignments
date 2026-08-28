@@ -5,72 +5,30 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const SYSTEM_LEVELS = Object.freeze({
-    harborPath: 3,
-    workshopGears: 2,
-    fractionBridge: 3,
-    lightReservoir: 7,
-    geometryGarden: 2,
-    controlConsole: 6
-  });
-
-  function clampLevel(value, maximum) {
-    const level = Number(value);
-    return Number.isFinite(level) ? Math.max(0, Math.min(maximum, Math.trunc(level))) : 0;
+  function normalizeStage(value) {
+    const stage = Number(value);
+    return Number.isFinite(stage) ? Math.max(0, Math.min(6, Math.trunc(stage))) : 0;
   }
 
-  function cssName(name) {
-    return name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-  }
-
-  function setDataset(node, name, value) {
-    const next = String(value);
-    if (node.dataset[name] !== next) node.dataset[name] = next;
-  }
-
-  function setProperty(node, name, value) {
-    if (!node.style) return;
-    const next = String(value);
-    if (node.style.getPropertyValue(name) !== next) node.style.setProperty(name, next);
-  }
-
-  function setAttribute(node, name, value) {
-    const next = String(value);
-    const current = node.getAttribute ? node.getAttribute(name) : node[name];
-    if (current !== next) node.setAttribute(name, next);
-  }
-
-  function renderLighthouseScene(root, worldSnapshot) {
-    if (!root || !worldSnapshot) return;
-    const levels = Object.fromEntries(Object.entries(SYSTEM_LEVELS).map(([system, maximum]) => [
-      system,
-      clampLevel(worldSnapshot.restoration?.[system], maximum)
-    ]));
-    const harborRepaired = levels.harborPath >= 1;
-    const fullyRestored = Object.entries(SYSTEM_LEVELS).every(([system, maximum]) => levels[system] === maximum);
-    const lampLit = Boolean(worldSnapshot.finale?.lampLit);
-    const beamSwept = Boolean(worldSnapshot.finale?.beamSwept);
-    const harborAccess = root.querySelector('[data-scene-part="harbor-access"]');
-
-    Object.entries(levels).forEach(([system, level]) => {
-      setDataset(root, system, level);
-      setProperty(root, `--${cssName(system)}-level`, level);
+  function render(root, projection) {
+    if (!root) return;
+    const stage = normalizeStage(projection?.stage);
+    if (root.dataset.stage !== String(stage)) root.dataset.stage = String(stage);
+    const windows = Array.from(root.querySelectorAll('.window-light'));
+    windows.forEach((windowLight, index) => {
+      const lit = stage >= index + 1;
+      if (windowLight.dataset.lit !== String(lit)) windowLight.dataset.lit = String(lit);
     });
-    setDataset(root, 'lit', lampLit);
-    setDataset(root, 'beamSwept', beamSwept);
-    root.classList.toggle('has-harbor-repair', harborRepaired);
-    root.classList.toggle('is-fully-restored', fullyRestored);
-    root.classList.toggle('is-lit', lampLit);
-    root.classList.toggle('has-swept-beam', beamSwept);
-    if (harborAccess) setDataset(harborAccess, 'repaired', harborRepaired);
-
-    const restorationStatus = fullyRestored
-      ? 'усі шість систем мають видимі відновлені частини'
-      : `шлях гавані ${levels.harborPath} з 3; шестерні ${levels.workshopGears} з 2; міст ${levels.fractionBridge} з 3; резервуар ${levels.lightReservoir} з 7; сад ${levels.geometryGarden} з 2; сигнали пульта ${levels.controlConsole} з 6`;
-    const lightStatus = lampLit ? 'лампа світить' : 'лампа ще не світить';
-    const beamStatus = beamSwept ? '; промінь завершив прохід' : '';
-    setAttribute(root, 'aria-label', `Маяк: ${restorationStatus}; ${lightStatus}${beamStatus}.`);
+    const lantern = root.querySelector('.lantern-light');
+    const beam = root.querySelector('.beam');
+    const final = stage === 6;
+    if (lantern && lantern.dataset.lit !== String(final)) lantern.dataset.lit = String(final);
+    if (beam && beam.dataset.lit !== String(final)) beam.dataset.lit = String(final);
+    const label = final
+      ? 'Маяк: світяться всі 5 вікон; ліхтар і промінь світять.'
+      : `Маяк: світяться ${stage} з 5 вікон; ліхтар ще не світить.`;
+    if (root.getAttribute('aria-label') !== label) root.setAttribute('aria-label', label);
   }
 
-  return { SYSTEM_LEVELS, renderLighthouseScene };
+  return { normalizeStage, render };
 });

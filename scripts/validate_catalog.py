@@ -19,11 +19,17 @@ PATH_RE = re.compile(r"^activities/(math|computer-science)/(0[5-9]|1[01])-([a-z]
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
 CSS_URL_RE = re.compile(r"url\(\s*(['\"]?)([^)'\"]+)\1\s*\)", re.IGNORECASE)
 TEXT_EXTENSIONS = {".html", ".css", ".js", ".json", ".md", ".py", ".txt", ""}
+IMAGE_EXTENSIONS = {".webp"}
 PUBLIC_FILES = {".nojekyll"}
 EXPECTED_RECORD_KEYS = {"id", "title", "subject", "grades", "path", "summary", "tags"}
 EXPECTED_TAG_KEYS = {"id", "label", "group"}
 GROUPS = ("purpose", "topic", "format")
 GROUP_RANK = {group: index for index, group in enumerate(GROUPS)}
+LEGACY_PATH_GRADE = {"grade5-lighthouse": 5}
+
+
+def is_allowed_public_file(path: Path) -> bool:
+    return path.suffix.lower() in TEXT_EXTENSIONS | IMAGE_EXTENSIONS or path.name in PUBLIC_FILES
 
 
 class DuplicateKeyError(ValueError):
@@ -147,7 +153,8 @@ def validate_manifest_data(data: object, *, check_paths: bool = True, root: Path
         primary_grade = int(prefix)
         if path_subject != subject:
             findings.append(f"{label}: path subject differs from metadata")
-        if isinstance(grades, list) and primary_grade not in grades:
+        metadata_grade = LEGACY_PATH_GRADE.get(str(activity_id), primary_grade)
+        if isinstance(grades, list) and metadata_grade not in grades:
             findings.append(f"{label}: primary grade is absent from grades")
         if slug != activity_id:
             findings.append(f"{label}: directory slug differs from id")
@@ -286,8 +293,11 @@ class Validator:
             relative = path.relative_to(ROOT)
             if path.name == "AGENTS.md":
                 self.error("public-safety", path, "AGENTS.md must not be public")
-            if path.suffix.lower() not in TEXT_EXTENSIONS and path.name not in PUBLIC_FILES:
+            if not is_allowed_public_file(path):
                 self.error("public-safety", path, "unexpected public file type")
+                continue
+            if path.suffix.lower() in IMAGE_EXTENSIONS:
+                self.counts["public_files_scanned"] += 1
                 continue
             if path.name == ".nojekyll":
                 continue

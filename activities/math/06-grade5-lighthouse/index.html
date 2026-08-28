@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Інтерактивна експедиція для повторення ключових тем математики 5 класу.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="Шість математичних завдань для 5 класу, що засвічують маяк.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; connect-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
   <title>Маяк п’ятого класу</title>
-  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="lighthouse-scene.css">
   <script src="generator.js" defer></script>
@@ -15,95 +14,49 @@
   <script src="app.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#activity">Перейти до завдання</a>
-  <header class="hero">
-    <a class="catalog-link" href="../../../">← До каталогу</a>
-    <div class="hero-copy">
-      <p class="eyebrow">Експедиція-повторення</p>
-      <h1>Маяк п’ятого класу</h1>
-      <p>Віднови шість пов’язаних систем і запали маяк у контрольній кімнаті.</p>
-    </div>
-    <div id="lighthouse-scene" class="lighthouse-scene" role="img" aria-label="Маяк: перший сегмент доступу пошкоджено; лампа ще не світить.">
-      <span class="beam" aria-hidden="true"></span>
-      <span class="tower" aria-hidden="true"></span>
-      <span class="lantern" aria-hidden="true"></span>
-      <span class="shore" aria-hidden="true"></span>
-      <span class="harbor-access" data-scene-part="harbor-access" data-repaired="false" aria-hidden="true"></span>
-    </div>
-  </header>
-
-  <main id="activity" class="shell">
-    <aside class="map" aria-labelledby="map-title">
-      <h2 id="map-title">Поточна станція</h2>
-      <ol id="station-list"></ol>
-      <details class="route-disclosure">
-        <summary>Маршрут</summary>
-        <div id="world" class="world" aria-label="Стан систем маяка">
-          <div data-system="harborPath"><span class="system-scene harbor-scene" aria-hidden="true" data-world-part="harbor-planks"><i></i><i></i><i></i></span><strong>Шлях гавані</strong><small>0 з 3</small></div>
-          <div data-system="workshopGears"><span class="system-scene workshop-scene" aria-hidden="true" data-world-part="workshop-gears"><i>⚙</i><i>⚙</i></span><strong>Майстерня</strong><small>0 з 2</small></div>
-          <div data-system="fractionBridge"><span class="system-scene bridge-scene" aria-hidden="true" data-world-part="bridge-spans"><i></i><i></i><i></i></span><strong>Міст дробів</strong><small>0 з 3</small></div>
-          <div data-system="lightReservoir"><span class="system-scene reservoir-scene" aria-hidden="true" data-world-part="reservoir-level"><i></i></span><strong>Резервуар світла</strong><small>0 з 7</small></div>
-          <div data-system="geometryGarden"><span class="system-scene garden-scene" aria-hidden="true"><span data-world-part="garden-bed"><i>✿</i><i>✿</i><i>✿</i></span><span data-world-part="garden-gate">╫</span></span><strong>Сад</strong><small>0 з 2</small></div>
-          <div data-system="controlConsole"><span class="system-scene console-scene" aria-hidden="true" data-world-part="console-lights"><i></i><i></i><i></i><i></i><i></i><i></i></span><strong>Пульт</strong><small>0 з 6</small></div>
-        </div>
-        <p class="seed-note">Код експедиції: <strong id="seed-value"></strong></p>
-      </details>
-    </aside>
-
-    <section class="mission" aria-live="off">
-      <div id="world-progress" class="progress-wrap progress-surface">
-        <p id="progress-label"></p>
-        <div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+  <a class="skip-link" href="#task">Перейти до завдання</a>
+  <main class="experience">
+    <section class="scene-panel" aria-label="Вигляд маяка">
+      <div id="lighthouse-scene" class="lighthouse-scene" role="img" aria-label="Маяк: жодне з 5 вікон не світиться; ліхтар ще не світить.">
+        <img src="lighthouse-base.webp" width="1600" height="900" alt="" aria-hidden="true">
+        <span class="window-light window-light-1" aria-hidden="true"></span>
+        <span class="window-light window-light-2" aria-hidden="true"></span>
+        <span class="window-light window-light-3" aria-hidden="true"></span>
+        <span class="window-light window-light-4" aria-hidden="true"></span>
+        <span class="window-light window-light-5" aria-hidden="true"></span>
+        <span class="lantern-light" aria-hidden="true"></span>
+        <span class="beam" aria-hidden="true"></span>
       </div>
-      <div class="guide" aria-label="Підказка Іскри" aria-live="polite">
-        <span class="firefly" aria-hidden="true">✦</span>
-        <p><strong>Іскра:</strong> <span id="guide-text">Почнімо з доступного кроку. Помилка — це сигнал, а не поразка.</span></p>
-      </div>
-      <section id="practice-panel" class="lesson-panel" hidden aria-labelledby="practice-title">
-        <h2 id="practice-title">Огляд завершеної станції</h2>
-        <p id="practice-copy"></p>
-        <div class="actions"><button id="practice-start" class="button secondary" type="button">Почати окрему практику</button><button id="practice-close" class="button quiet" type="button">Закрити огляд</button></div>
-      </section>
-      <article id="prompt-card" class="prompt-card" aria-labelledby="scene-title">
-        <p id="scene-kicker" class="scene-kicker"></p>
-        <h2 id="scene-title" tabindex="-1"></h2>
-        <section id="lesson-panel" class="lesson-panel" hidden aria-labelledby="lesson-title">
-          <h3 id="lesson-title">Коротке пригадування</h3>
-          <div id="lesson-copy"></div>
-          <div id="lesson-actions" class="lesson-actions"></div>
-          <button id="pacing-toggle" class="button quiet" type="button" hidden aria-pressed="false">Без поспіху — увімкнути м’які підказки Іскри</button>
-          <button id="lesson-continue" class="button primary" type="button" hidden>Перейти до ремонту</button>
-        </section>
-        <p id="question" class="question"></p>
+    </section>
+
+    <section id="task" class="task-panel" aria-labelledby="activity-title">
+      <header id="activity-context">
+        <a class="catalog-link" href="../../../">← До каталогу</a>
+        <h1 id="activity-title">Маяк п’ятого класу</h1>
+        <p class="instruction">Розв’яжи 6 завдань — кожна правильна відповідь засвітить маяк.</p>
+      </header>
+
+      <section id="game" class="question-card" aria-labelledby="question-title">
+        <p id="progress-label" class="progress-label">Завдання 1 з 6</p>
+        <h2 id="question-title" tabindex="-1"></h2>
         <div id="answer-area" class="answer-area"></div>
         <div class="actions">
           <button id="check-button" class="button primary" type="button">Перевірити</button>
-          <button id="hint-button" class="button secondary" type="button">Підказка 1 з 3</button>
-          <button id="reveal-button" class="button quiet" type="button" hidden>Показати розв’язання й продовжити</button>
+          <button id="hint-button" class="button secondary" type="button">Підказка</button>
           <button id="next-button" class="button primary" type="button" hidden>Далі</button>
         </div>
-        <div id="diagnostic" class="status wrong" role="alert"></div>
-        <div id="status" class="status" role="status" tabindex="-1"></div>
-      </article>
-
-      <section id="report" class="report" hidden aria-labelledby="report-title">
-        <p class="scene-kicker">Маяк світить</p>
-        <div class="finale-scene" aria-hidden="true"><span class="final-beam"></span><span class="final-tower"></span></div>
-        <h2 id="report-title" tabindex="-1">Підсумок експедиції</h2>
-        <p id="finale-status">Маяк запалено — промінь освітлює шлях</p>
-        <p>Це тренувальна підказка, а не оцінка.</p>
-        <div id="report-groups"></div>
-        <div class="actions">
-          <button id="same-button" class="button secondary" type="button">Та сама експедиція</button>
-          <button id="new-button" class="button primary" type="button">Нова експедиція</button>
-          <a class="button quiet link-button" href="../../../">Повернутися до каталогу</a>
-        </div>
+        <p id="hint" class="support hint" role="status" hidden></p>
+        <p id="feedback" class="support feedback" role="alert" tabindex="-1" hidden></p>
       </section>
 
-      <section id="fatal-error" class="fatal-error" hidden aria-labelledby="fatal-title">
-        <h2 id="fatal-title">Експедицію не вдалося створити</h2>
-        <p>Жодної відповіді не збережено. Почни нову експедицію.</p>
-        <button id="restart-button" class="button primary" type="button">Почати знову</button>
+      <section id="finale" class="finale" aria-labelledby="finale-title" hidden>
+        <h2 id="finale-title" tabindex="-1">Маяк світить! Усі 6 завдань виконано.</h2>
+        <button id="new-game-button" class="button primary" type="button">Нова гра</button>
+      </section>
+
+      <section id="failure" class="failure" aria-labelledby="failure-title" hidden>
+        <h2 id="failure-title" tabindex="-1">Не вдалося створити завдання. Почни нову гру.</h2>
+        <button id="retry-button" class="button primary" type="button">Нова гра</button>
       </section>
     </section>
   </main>

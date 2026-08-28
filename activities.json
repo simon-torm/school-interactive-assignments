@@ -25,9 +25,9 @@
       "id": "grade5-lighthouse",
       "title": "Маяк п’ятого класу",
       "subject": "math",
-      "grades": [6],
+      "grades": [5],
       "path": "activities/math/06-grade5-lighthouse/",
-      "summary": "Експедиція-повторення ключових тем математики 5 класу з підказками та підсумком за темами.",
+      "summary": "Шість завдань з математики 5 класу, які крок за кроком засвічують маяк.",
       "tags": ["review", "decimals", "divisibility", "equations", "fractions", "geometry", "natural-numbers", "word-problems", "game"]
     }
   ]

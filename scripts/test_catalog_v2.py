@@ -37,7 +37,7 @@ def valid_manifest() -> dict[str, object]:
                 "id": "grade5-lighthouse",
                 "title": "Маяк п’ятого класу",
                 "subject": "math",
-                "grades": [6],
+                "grades": [5],
                 "path": "activities/math/06-grade5-lighthouse/",
                 "summary": "Експедиція-повторення математики 5 класу.",
                 "tags": ["review", "fractions", "game"],
@@ -59,6 +59,8 @@ def expect_invalid(name: str, mutate) -> None:
 
 def main() -> None:
     assert errors(valid_manifest()) == []
+    assert module.is_allowed_public_file(Path("lighthouse-base.webp"))
+    assert not module.is_allowed_public_file(Path("learner-data.bin"))
     expect_invalid("V1 envelope", lambda d: d.__setitem__("schemaVersion", 1))
     expect_invalid("extra envelope key", lambda d: d.__setitem__("extra", True))
     expect_invalid("missing tags registry", lambda d: d.pop("tags"))
@@ -79,6 +81,10 @@ def main() -> None:
     expect_invalid("activity order", lambda d: d["activities"].reverse())
     expect_invalid("bad path subject", lambda d: d["activities"][0].__setitem__("path", "activities/computer-science/06-fraction-kingdom/"))
     expect_invalid("bad grade", lambda d: d["activities"][0].__setitem__("grades", [6, 5]))
+    manifest = json.loads((ROOT / "activities.json").read_text(encoding="utf-8"))
+    lighthouse = next(record for record in manifest["activities"] if record["id"] == "grade5-lighthouse")
+    assert lighthouse["grades"] == [5]
+    assert lighthouse["summary"] == "Шість завдань з математики 5 класу, які крок за кроком засвічують маяк."
     json.dumps(valid_manifest(), ensure_ascii=False)
     print("PASS: V2 manifest positive and negative fixtures")
 
