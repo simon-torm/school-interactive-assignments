@@ -8,8 +8,10 @@
   <title>Маяк п’ятого класу</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="lighthouse-scene.css">
   <script src="generator.js" defer></script>
   <script src="game-model.js" defer></script>
+  <script src="lighthouse-scene.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -21,22 +23,31 @@
       <h1>Маяк п’ятого класу</h1>
       <p>Віднови шість пов’язаних систем і запали маяк у контрольній кімнаті.</p>
     </div>
-    <div id="lighthouse" class="lighthouse" data-lit="false" aria-hidden="true"><span class="beam"></span></div>
+    <div id="lighthouse-scene" class="lighthouse-scene" role="img" aria-label="Маяк: перший сегмент доступу пошкоджено; лампа ще не світить.">
+      <span class="beam" aria-hidden="true"></span>
+      <span class="tower" aria-hidden="true"></span>
+      <span class="lantern" aria-hidden="true"></span>
+      <span class="shore" aria-hidden="true"></span>
+      <span class="harbor-access" data-scene-part="harbor-access" data-repaired="false" aria-hidden="true"></span>
+    </div>
   </header>
 
   <main id="activity" class="shell">
     <aside class="map" aria-labelledby="map-title">
-      <h2 id="map-title">Маршрут</h2>
-      <div id="world" class="world" aria-label="Стан систем маяка">
-        <div data-system="harborPath"><span class="system-scene harbor-scene" aria-hidden="true" data-world-part="harbor-planks"><i></i><i></i><i></i></span><strong>Шлях гавані</strong><small>0 з 3</small></div>
-        <div data-system="workshopGears"><span class="system-scene workshop-scene" aria-hidden="true" data-world-part="workshop-gears"><i>⚙</i><i>⚙</i></span><strong>Майстерня</strong><small>0 з 2</small></div>
-        <div data-system="fractionBridge"><span class="system-scene bridge-scene" aria-hidden="true" data-world-part="bridge-spans"><i></i><i></i><i></i></span><strong>Міст дробів</strong><small>0 з 3</small></div>
-        <div data-system="lightReservoir"><span class="system-scene reservoir-scene" aria-hidden="true" data-world-part="reservoir-level"><i></i></span><strong>Резервуар світла</strong><small>0 з 7</small></div>
-        <div data-system="geometryGarden"><span class="system-scene garden-scene" aria-hidden="true"><span data-world-part="garden-bed"><i>✿</i><i>✿</i><i>✿</i></span><span data-world-part="garden-gate">╫</span></span><strong>Сад</strong><small>0 з 2</small></div>
-        <div data-system="controlConsole"><span class="system-scene console-scene" aria-hidden="true" data-world-part="console-lights"><i></i><i></i><i></i><i></i><i></i><i></i></span><strong>Пульт</strong><small>0 з 6</small></div>
-      </div>
+      <h2 id="map-title">Поточна станція</h2>
       <ol id="station-list"></ol>
-      <p class="seed-note">Код експедиції: <strong id="seed-value"></strong></p>
+      <details class="route-disclosure">
+        <summary>Маршрут</summary>
+        <div id="world" class="world" aria-label="Стан систем маяка">
+          <div data-system="harborPath"><span class="system-scene harbor-scene" aria-hidden="true" data-world-part="harbor-planks"><i></i><i></i><i></i></span><strong>Шлях гавані</strong><small>0 з 3</small></div>
+          <div data-system="workshopGears"><span class="system-scene workshop-scene" aria-hidden="true" data-world-part="workshop-gears"><i>⚙</i><i>⚙</i></span><strong>Майстерня</strong><small>0 з 2</small></div>
+          <div data-system="fractionBridge"><span class="system-scene bridge-scene" aria-hidden="true" data-world-part="bridge-spans"><i></i><i></i><i></i></span><strong>Міст дробів</strong><small>0 з 3</small></div>
+          <div data-system="lightReservoir"><span class="system-scene reservoir-scene" aria-hidden="true" data-world-part="reservoir-level"><i></i></span><strong>Резервуар світла</strong><small>0 з 7</small></div>
+          <div data-system="geometryGarden"><span class="system-scene garden-scene" aria-hidden="true"><span data-world-part="garden-bed"><i>✿</i><i>✿</i><i>✿</i></span><span data-world-part="garden-gate">╫</span></span><strong>Сад</strong><small>0 з 2</small></div>
+          <div data-system="controlConsole"><span class="system-scene console-scene" aria-hidden="true" data-world-part="console-lights"><i></i><i></i><i></i><i></i><i></i><i></i></span><strong>Пульт</strong><small>0 з 6</small></div>
+        </div>
+        <p class="seed-note">Код експедиції: <strong id="seed-value"></strong></p>
+      </details>
     </aside>
 
     <section class="mission" aria-live="off">

@@ -1,0 +1,253 @@
+.lighthouse-scene {
+  overflow: visible;
+  isolation: isolate;
+  --harbor-path-level: 0;
+  --workshop-gears-level: 0;
+  --fraction-bridge-level: 0;
+  --light-reservoir-level: 0;
+  --geometry-garden-level: 0;
+  --control-console-level: 0;
+}
+.lighthouse-scene::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: -72%;
+  bottom: 0;
+  width: 184%;
+  height: 24%;
+  background:
+    linear-gradient(180deg, rgba(132, 196, 211, .42), rgba(35, 93, 119, .72)),
+    repeating-linear-gradient(170deg, transparent 0 12%, rgba(224, 244, 239, .36) 13% 16%);
+  clip-path: polygon(0 35%, 18% 25%, 37% 42%, 59% 20%, 78% 34%, 100% 18%, 100% 100%, 0 100%);
+}
+.lighthouse-scene::after {
+  content: "";
+  position: absolute;
+  z-index: 8;
+  right: 47%;
+  bottom: 27%;
+  color: #263f52;
+  font-size: .92rem;
+  font-weight: 900;
+  letter-spacing: -.2em;
+  line-height: 1;
+  text-shadow: 0 .08rem rgba(255, 255, 255, .58);
+  transform: translateY(18%) scale(.82);
+  transform-origin: right bottom;
+  transition: transform .32s ease-out;
+}
+.lighthouse-scene[data-workshop-gears="1"]::after { content: "⚙"; transform: none; }
+.lighthouse-scene[data-workshop-gears="2"]::after { content: "⚙ ⚙"; transform: none; }
+.lighthouse-scene .tower {
+  position: absolute;
+  z-index: 4;
+  right: 4%;
+  bottom: 7%;
+  width: 58%;
+  height: 72%;
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, .42), transparent 46%, rgba(30, 55, 73, .18)),
+    repeating-linear-gradient(0deg, #dce6e8 0 20%, #c96d52 20% 28%);
+  clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+  filter: drop-shadow(0 .18rem .12rem rgba(19, 42, 58, .28));
+}
+.lighthouse-scene .tower::before {
+  content: "";
+  position: absolute;
+  left: 37%;
+  top: 24%;
+  width: 12%;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  background: #f4b942;
+  border: .12rem solid #293a4d;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity .24s ease-out;
+}
+.lighthouse-scene[data-control-console="1"] .tower::before { opacity: 1; box-shadow: none; }
+.lighthouse-scene[data-control-console="2"] .tower::before { opacity: 1; box-shadow: .75rem 0 0 -.01rem #f4b942, .75rem 0 0 .1rem #293a4d; }
+.lighthouse-scene[data-control-console="3"] .tower::before { opacity: 1; box-shadow: .75rem 0 0 -.01rem #f4b942, .75rem 0 0 .1rem #293a4d, 0 1.05rem 0 -.01rem #f4b942, 0 1.05rem 0 .1rem #293a4d; }
+.lighthouse-scene[data-control-console="4"] .tower::before { opacity: 1; box-shadow: .75rem 0 0 -.01rem #f4b942, .75rem 0 0 .1rem #293a4d, 0 1.05rem 0 -.01rem #f4b942, 0 1.05rem 0 .1rem #293a4d, .75rem 1.05rem 0 -.01rem #f4b942, .75rem 1.05rem 0 .1rem #293a4d; }
+.lighthouse-scene[data-control-console="5"] .tower::before { opacity: 1; box-shadow: .75rem 0 0 -.01rem #f4b942, .75rem 0 0 .1rem #293a4d, 0 1.05rem 0 -.01rem #f4b942, 0 1.05rem 0 .1rem #293a4d, .75rem 1.05rem 0 -.01rem #f4b942, .75rem 1.05rem 0 .1rem #293a4d, 0 2.1rem 0 -.01rem #f4b942, 0 2.1rem 0 .1rem #293a4d; }
+.lighthouse-scene[data-control-console="6"] .tower::before { opacity: 1; box-shadow: .75rem 0 0 -.01rem #f4b942, .75rem 0 0 .1rem #293a4d, 0 1.05rem 0 -.01rem #f4b942, 0 1.05rem 0 .1rem #293a4d, .75rem 1.05rem 0 -.01rem #f4b942, .75rem 1.05rem 0 .1rem #293a4d, 0 2.1rem 0 -.01rem #f4b942, 0 2.1rem 0 .1rem #293a4d, .75rem 2.1rem 0 -.01rem #f4b942, .75rem 2.1rem 0 .1rem #293a4d; }
+.lighthouse-scene .tower::after {
+  content: "";
+  position: absolute;
+  left: 38%;
+  bottom: 0;
+  width: 24%;
+  height: 18%;
+  background: linear-gradient(90deg, #20354a, #3d5669);
+  border-radius: 48% 48% 0 0;
+}
+.lighthouse-scene .lantern {
+  position: absolute;
+  z-index: 6;
+  right: 4%;
+  top: 2%;
+  width: 58%;
+  height: 18%;
+  box-sizing: border-box;
+  background:
+    linear-gradient(#293a4d 0 0) left bottom / 0 .18rem no-repeat,
+    linear-gradient(90deg, #f6c453, #ffde79 52%, #eba72b);
+  background-size: 0 .18rem, auto;
+  border: .34rem solid #293a4d;
+  border-radius: .35rem;
+  box-shadow: inset 0 0 .7rem rgba(255, 255, 255, .35);
+}
+.lighthouse-scene[data-light-reservoir="1"] .lantern { background-size: 14% .18rem, auto; }
+.lighthouse-scene[data-light-reservoir="2"] .lantern { background-size: 28% .18rem, auto; }
+.lighthouse-scene[data-light-reservoir="3"] .lantern { background-size: 42% .18rem, auto; }
+.lighthouse-scene[data-light-reservoir="4"] .lantern { background-size: 56% .18rem, auto; }
+.lighthouse-scene[data-light-reservoir="5"] .lantern { background-size: 70% .18rem, auto; }
+.lighthouse-scene[data-light-reservoir="6"] .lantern { background-size: 84% .18rem, auto; }
+.lighthouse-scene[data-light-reservoir="7"] .lantern { background-size: 100% .18rem, auto; }
+.lighthouse-scene .lantern::before {
+  content: "";
+  position: absolute;
+  left: -12%;
+  top: -38%;
+  width: 124%;
+  height: 34%;
+  background: #20354a;
+  clip-path: polygon(18% 100%, 30% 12%, 70% 12%, 82% 100%);
+}
+.lighthouse-scene .lantern::after {
+  content: "";
+  position: absolute;
+  left: -22%;
+  bottom: -34%;
+  width: 144%;
+  height: 28%;
+  background:
+    linear-gradient(#293a4d 0 0) bottom / 100% 34% no-repeat,
+    repeating-linear-gradient(90deg, #293a4d 0 5%, transparent 5% 19%);
+}
+.lighthouse-scene .beam {
+  position: absolute;
+  z-index: 1;
+  right: 45%;
+  top: 7%;
+  width: 255%;
+  height: 26%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent 4%, rgba(255, 236, 130, .14) 52%, rgba(255, 236, 130, .7));
+  clip-path: polygon(0 3%, 100% 37%, 100% 63%, 0 97%);
+  transform: rotate(-8deg);
+  transform-origin: right;
+}
+.lighthouse-scene .shore {
+  position: absolute;
+  z-index: 3;
+  right: -20%;
+  bottom: -3%;
+  width: 148%;
+  height: 22%;
+  background:
+    radial-gradient(ellipse at 82% 35%, #7d8f98 0 16%, transparent 17%),
+    radial-gradient(ellipse at 56% 55%, #607784 0 28%, transparent 29%),
+    radial-gradient(ellipse at 24% 74%, #405b6b 0 40%, transparent 41%);
+}
+.lighthouse-scene .shore::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 0;
+  bottom: 0;
+  height: 48%;
+  background: linear-gradient(120deg, #314b5d, #526b78 62%, #263f52);
+  border-radius: 70% 32% 0 0;
+}
+.lighthouse-scene .shore::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  right: 14%;
+  bottom: 35%;
+  color: #e8d684;
+  font-size: .9rem;
+  letter-spacing: .14rem;
+  line-height: 1;
+  text-shadow: 0 .12rem #263f52;
+}
+.lighthouse-scene[data-geometry-garden="1"] .shore::after { content: "✿"; }
+.lighthouse-scene[data-geometry-garden="2"] .shore::after { content: "✿ ✿"; }
+.lighthouse-scene .harbor-access {
+  position: absolute;
+  z-index: 7;
+  left: -5%;
+  bottom: 18%;
+  width: 64%;
+  height: 7%;
+  box-sizing: border-box;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .18), transparent 40%),
+    repeating-linear-gradient(90deg, #775630 0 17%, #ba8b4f 17% 21%);
+  border: .14rem solid #4c3824;
+  border-radius: .2rem;
+  box-shadow: 0 .18rem .12rem rgba(18, 34, 45, .35);
+  --harbor-transform: translate(-14%, 34%) rotate(-11deg);
+  transform: var(--harbor-transform);
+  transform-origin: right center;
+  transition: transform .42s ease-out;
+}
+.lighthouse-scene .harbor-access::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -145%;
+  width: 0;
+  height: 58%;
+  box-sizing: border-box;
+  background: repeating-linear-gradient(90deg, #d9d0b3 0 24%, transparent 24% 33%);
+  border-block: .08rem solid #405b6b;
+  transition: width .36s ease-out;
+}
+.lighthouse-scene[data-fraction-bridge="1"] .harbor-access::after { width: 30%; }
+.lighthouse-scene[data-fraction-bridge="2"] .harbor-access::after { width: 64%; }
+.lighthouse-scene[data-fraction-bridge="3"] .harbor-access::after { width: 100%; }
+.lighthouse-scene[data-harbor-path="1"] .harbor-access { --harbor-transform: translate(-8%, 22%) rotate(-7deg); }
+.lighthouse-scene[data-harbor-path="2"] .harbor-access { --harbor-transform: translate(-3%, 9%) rotate(-3deg); }
+.lighthouse-scene[data-harbor-path="3"] .harbor-access { --harbor-transform: translate(0, 0) rotate(0); }
+.lighthouse-scene.has-harbor-repair .harbor-access {
+  transform: var(--harbor-transform);
+}
+.lighthouse-scene.is-lit .beam {
+  opacity: .7;
+  animation: lighthouse-scene-beam 1.6s ease-out 1;
+}
+.lighthouse-scene.has-swept-beam .beam { opacity: .35; transform: rotate(14deg); animation: none; }
+@keyframes lighthouse-scene-beam {
+  0% { opacity: 0; transform: rotate(-12deg); }
+  35% { opacity: .78; }
+  100% { opacity: .35; transform: rotate(14deg); }
+}
+.hero > .lighthouse-scene { bottom: 2rem; }
+@media (max-width: 760px) {
+  .hero > .lighthouse-scene {
+    right: .75rem;
+    bottom: 0;
+    width: 100px;
+    height: 109px;
+    overflow: hidden;
+  }
+  .lighthouse-scene .lantern { border-width: .22rem; }
+  .lighthouse-scene .tower::before {
+    border-width: .08rem;
+  }
+  .lighthouse-scene .harbor-access { left: 0; bottom: 18%; border-width: .1rem; }
+}
+@media (max-width: 240px) {
+  .hero > .lighthouse-scene { right: .2rem; width: 64px; height: 96px; }
+  .lighthouse-scene .harbor-access { left: 0; bottom: 18%; width: 65%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lighthouse-scene::after,
+  .lighthouse-scene .tower::before,
+  .lighthouse-scene .harbor-access::after { transition: none; }
+  .lighthouse-scene .harbor-access { transition: none; }
+  .lighthouse-scene.is-lit .beam { opacity: .35; transform: rotate(14deg); animation: none; }
+}

@@ -266,6 +266,16 @@
     return SYSTEMS.every((system, index) => state.restoration[system] === COUNTS[index]);
   }
 
+  function selectWorld(state) {
+    return Object.freeze({
+      phase: state.phase,
+      stationIndex: state.stationIndex,
+      challengeIndex: state.challengeIndex,
+      restoration: Object.freeze({ ...state.restoration }),
+      finale: Object.freeze({ ...state.finale })
+    });
+  }
+
   function report(state) {
     const result = { independent: [], supported: [], solution: [], supportLevels: [0, 0, 0] };
     Object.entries(state.attemptsById).forEach(([id, attempt]) => {
@@ -298,5 +308,5 @@
     return lines[key] || '';
   }
 
-  return { COUNTS, SYSTEMS, createState, emptyAttempt, enterChallenge, reduce, dueSupport, isFullyRestored, report, dialogue };
+  return { COUNTS, SYSTEMS, createState, emptyAttempt, enterChallenge, reduce, dueSupport, isFullyRestored, selectWorld, report, dialogue };
 });

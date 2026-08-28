@@ -3,6 +3,7 @@
 
   const math = window.LighthouseMath;
   const game = window.LighthouseGame;
+  const lighthouseScene = window.LighthouseScene;
   const stations = [
     { title: 'Числова гавань', intro: 'Відновімо лінзу натуральних чисел.', start: 0, end: 3 },
     { title: 'Кузня подільності', intro: 'Перевіримо ознаки подільності, НСД і НСК.', start: 3, end: 5 },
@@ -26,7 +27,7 @@
     'scene-title', 'question', 'answer-area', 'check-button', 'hint-button', 'reveal-button', 'next-button',
     'status', 'report', 'report-title', 'report-groups', 'same-button', 'new-button', 'fatal-error', 'restart-button',
     'lesson-panel', 'lesson-copy', 'lesson-actions', 'lesson-continue', 'pacing-toggle', 'diagnostic',
-    'practice-panel', 'practice-copy', 'practice-start', 'practice-close'
+    'practice-panel', 'practice-copy', 'practice-start', 'practice-close', 'lighthouse-scene'
   ].map((id) => [id, document.getElementById(id)]));
 
   let seed;
@@ -95,6 +96,7 @@
       node.querySelector('small').textContent = `${value} з ${maximum}`;
       node.setAttribute('aria-label', `${node.querySelector('strong').textContent}: відновлено ${value} з ${maximum}`);
     });
+    lighthouseScene.renderLighthouseScene(elements['lighthouse-scene'], game.selectWorld(gameState));
   }
 
   function setGuide(key) {
@@ -190,20 +192,23 @@
     return true;
   }
 
-  function field(name, label, inputMode = 'numeric') {
+  function field(name, label, inputMode = 'numeric', controlName = 'input') {
     const wrapper = document.createElement('div');
     wrapper.className = 'field';
     const labelNode = document.createElement('label');
     labelNode.htmlFor = `response-${name}`;
     labelNode.textContent = label;
-    const input = document.createElement('input');
-    input.id = `response-${name}`;
-    input.dataset.answer = name;
-    input.inputMode = inputMode;
-    input.autocomplete = 'off';
-    input.setAttribute('aria-describedby', 'diagnostic');
-    wrapper.append(labelNode, input);
+    const control = document.createElement(controlName);
+    control.id = `response-${name}`;
+    control.dataset.answer = name;
+    if (controlName === 'input') { control.inputMode = inputMode; control.autocomplete = 'off'; }
+    control.setAttribute('aria-describedby', 'diagnostic');
+    wrapper.append(labelNode, control);
     return wrapper;
+  }
+
+  function outputField(name, label) {
+    return field(name, label, 'numeric', 'output');
   }
 
   const fractionNames = { 2: 'других', 3: 'третіх', 4: 'четвертих', 5: 'п’ятих', 6: 'шостих', 7: 'сьомих', 8: 'восьмих', 9: 'дев’ятих', 10: 'десятих', 11: 'одинадцятих', 12: 'дванадцятих' };
@@ -262,30 +267,30 @@
   function renderEqualGroupTrays(item, area) {
     const workspace = document.createElement('fieldset'); workspace.className = 'mechanic-workspace group-trays';
     const legend = document.createElement('legend'); legend.textContent = `Поділено на ${item.data.d} рівних груп. Активуй ${item.data.n}.`;
-    const output = field('value', 'Скільки ліхтарів активовано'); const input = output.querySelector('input'); input.readOnly = true;
+    const result = outputField('value', 'Скільки ліхтарів активовано'); const output = result.querySelector('output');
     let selected = 0;
     for (let group = 0; group < item.data.d; group += 1) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'tray-button'; button.textContent = `Група ${group + 1}: ${item.data.k}`; button.setAttribute('aria-pressed', 'false');
-      button.addEventListener('click', () => { const active = button.getAttribute('aria-pressed') !== 'true'; button.setAttribute('aria-pressed', String(active)); selected += active ? 1 : -1; input.value = String(selected * item.data.k); });
+      button.addEventListener('click', () => { const active = button.getAttribute('aria-pressed') !== 'true'; button.setAttribute('aria-pressed', String(active)); selected += active ? 1 : -1; output.value = String(selected * item.data.k); });
       workspace.append(button);
     }
-    workspace.prepend(legend); workspace.append(output); area.append(workspace);
+    workspace.prepend(legend); workspace.append(result); area.append(workspace);
   }
 
   function renderPieceToWhole(item, area) {
     const workspace = document.createElement('fieldset'); workspace.className = 'mechanic-workspace piece-workspace';
     const legend = document.createElement('legend'); legend.textContent = 'Збери цілу частину й запиши залишок';
     const row = document.createElement('div'); row.className = 'mixed-editor';
-    const whole = field('whole', 'Ціла частина');
-    const fraction = document.createElement('div'); fraction.className = 'editable-fraction';
-    fraction.append(field('numerator', 'Чисельник'), document.createElement('span'), field('denominator', 'Знаменник'));
+    const whole = outputField('whole', 'Ціла частина');
+    const fraction = document.createElement('div'); fraction.className = 'stacked-fraction';
+    fraction.append(outputField('numerator', 'Чисельник'), document.createElement('span'), outputField('denominator', 'Знаменник'));
     fraction.children[1].className = 'fraction-bar'; row.append(whole, fraction);
     const pieces = document.createElement('div'); pieces.className = 'fraction-pieces';
     for (let count = 0; count < item.data.a + item.data.b; count += 1) { const piece = document.createElement('span'); piece.textContent = '◆'; pieces.append(piece); }
     let moved = 0;
     const update = () => {
       area.dataset.piecesMoved = String(moved);
-      whole.querySelector('input').value = moved === item.data.d ? '1' : '0';
+      whole.querySelector('output').value = moved === item.data.d ? '1' : '0';
       fraction.querySelector('[data-answer="numerator"]').value = String(item.data.a + item.data.b - moved);
       fraction.querySelector('[data-answer="denominator"]').value = String(item.data.d);
       [...pieces.children].forEach((piece, position) => piece.classList.toggle('moved', position < moved));
@@ -293,7 +298,7 @@
     const move = document.createElement('button'); move.type = 'button'; move.className = 'mechanic-button'; move.textContent = 'Перемістити одну частинку в ціле';
     move.addEventListener('click', () => { if (moved < item.data.d) { moved += 1; update(); } });
     const undo = document.createElement('button'); undo.type = 'button'; undo.className = 'mechanic-button'; undo.textContent = 'Скасувати частинку'; undo.addEventListener('click', () => { if (moved > 0) { moved -= 1; update(); } });
-    workspace.append(legend, row, pieces, move, undo); area.append(workspace); update();
+    workspace.append(legend, pieces, move, undo, row); area.append(workspace); update();
   }
 
   function renderCrateSort(item, area) {
@@ -544,7 +549,7 @@
 
   function collectAnswer(item) {
     if (item.type === 'naturalOrder') return elements['answer-area'].dataset.order || '';
-    if (item.answer.kind === 'choice' && elements['answer-area'].dataset.choice) return elements['answer-area'].dataset.choice;
+    if (item.answer.kind === 'choice') return elements['answer-area'].dataset.choice || '';
     if (item.answer.kind === 'set') return [...elements['answer-area'].querySelectorAll('input:checked')].map((input) => input.value);
     if (['remainder', 'gcdLcm', 'mixed', 'rectangle'].includes(item.answer.kind)) {
       const response = Object.fromEntries([...elements['answer-area'].querySelectorAll('[data-answer]')].map((input) => [input.dataset.answer, input.value]));
@@ -662,7 +667,7 @@
   function finish() {
     clearPacing();
     gameState = game.reduce(gameState, { type: 'FINALE_PLAY' });
-    document.getElementById('lighthouse').dataset.lit = String(gameState.finale.lampLit);
+    lighthouseScene.renderLighthouseScene(elements['lighthouse-scene'], game.selectWorld(gameState));
     elements['prompt-card'].hidden = true;
     elements.report.hidden = false;
     elements['progress-label'].textContent = 'Експедицію завершено';
@@ -691,7 +696,11 @@
     support.append(supportTitle, supportText); elements['report-groups'].append(support);
     setGuide('finale.ready');
     const finaleTokens = { runToken: gameState.runToken, challengeToken: gameState.challengeToken };
-    setTimeout(() => { gameState = game.reduce(gameState, { type: 'FINALE_COMPLETE', ...finaleTokens }); if (gameState.phase === 'report') { setGuide('finale.complete'); elements['report-title'].focus(); } }, 1600);
+    setTimeout(() => {
+      gameState = game.reduce(gameState, { type: 'FINALE_COMPLETE', ...finaleTokens });
+      lighthouseScene.renderLighthouseScene(elements['lighthouse-scene'], game.selectWorld(gameState));
+      if (gameState.phase === 'report') { setGuide('finale.complete'); elements['report-title'].focus(); }
+    }, 1600);
   }
 
   function start(nextSeed) {
@@ -703,11 +712,12 @@
       prompts = expedition.prompts.concat(expedition.finalPrompts);
       gameState = game.enterChallenge(game.reduce(game.createState(seed), { type: 'START' }), 0, prompts[0].id);
       unlockedStation = 0;
-      document.getElementById('lighthouse').dataset.lit = 'false';
       elements['seed-value'].textContent = String(seed);
       renderPrompt(false);
     } catch (error) {
       console.error('Expedition generation failed:', error instanceof Error ? error.message : 'unknown error');
+      const fatalWorld = gameState || game.createState(nextSeed);
+      lighthouseScene.renderLighthouseScene(elements['lighthouse-scene'], game.selectWorld(fatalWorld));
       elements['prompt-card'].hidden = true; elements.report.hidden = true; elements['fatal-error'].hidden = false;
     }
   }
@@ -735,7 +745,7 @@
       gameState = game.reduce(gameState, { type: invalid ? 'CHECK_INVALID' : 'CHECK_WRONG', id: item.id });
       elements['reveal-button'].hidden = !attemptView(item).canReveal;
       setStatus(diagnose(item, response), true);
-      const firstInvalid = elements['answer-area'].querySelector('[data-answer]');
+      const firstInvalid = elements['answer-area'].querySelector('button, input:not([readonly]), select, [data-answer]');
       if (firstInvalid) { firstInvalid.setAttribute('aria-invalid', 'true'); firstInvalid.focus(); }
       elements['guide-text'].textContent = game.dialogue(invalid ? 'response.invalid' : 'response.wrong', { station: stations[stationFor(index)].title, system: stations[stationFor(index)].title });
     }

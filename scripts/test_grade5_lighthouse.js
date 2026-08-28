@@ -9,12 +9,106 @@ const game = require('../activities/math/06-grade5-lighthouse/game-model.js');
 const activityRoot = path.join(__dirname, '../activities/math/06-grade5-lighthouse');
 const source = (name) => fs.readFileSync(path.join(activityRoot, name), 'utf8');
 
+// The principal scene receives a detached projection, never canonical state.
+const initialWorldState = game.createState(1);
+assert.equal(typeof game.selectWorld, 'function', 'world projection is exported');
+assert.deepEqual(game.selectWorld(initialWorldState), {
+  phase: 'intro',
+  stationIndex: 0,
+  challengeIndex: 0,
+  restoration: {
+    harborPath: 0,
+    workshopGears: 0,
+    fractionBridge: 0,
+    lightReservoir: 0,
+    geometryGarden: 0,
+    controlConsole: 0
+  },
+  finale: { lampLit: false, beamSwept: false }
+});
+let harborOneState = game.enterChallenge(game.reduce(initialWorldState, { type: 'START' }), 0, 'harbor-1');
+harborOneState = game.reduce(harborOneState, { type: 'CHECK_CORRECT', id: 'harbor-1' });
+const harborOneWorld = game.selectWorld(harborOneState);
+assert.equal(harborOneWorld.restoration.harborPath, 1, 'first Harbor success reaches the scene projection');
+assert.notEqual(harborOneWorld.restoration, harborOneState.restoration, 'projection detaches restoration state');
+assert.notEqual(harborOneWorld.finale, harborOneState.finale, 'projection detaches finale state');
+assert.equal(Object.isFrozen(harborOneWorld), true, 'projection is immutable');
+assert.equal(Object.isFrozen(harborOneWorld.restoration), true, 'restoration projection is immutable');
+assert.equal(Object.isFrozen(harborOneWorld.finale), true, 'finale projection is immutable');
+
+// The isolated principal scene renders one physical Harbor repair once.
+const scenePath = path.join(activityRoot, 'lighthouse-scene.js');
+assert.equal(fs.existsSync(scenePath), true, 'principal scene renderer exists');
+const scene = require(scenePath);
+const sceneClasses = new Set();
+let repairClassAdditions = 0;
+const harborSegment = { dataset: {} };
+const sceneRoot = {
+  dataset: {},
+  classList: {
+    contains(name) { return sceneClasses.has(name); },
+    toggle(name, force) {
+      const present = sceneClasses.has(name);
+      if (force && !present) {
+        sceneClasses.add(name);
+        if (name === 'has-harbor-repair') repairClassAdditions += 1;
+      } else if (!force && present) sceneClasses.delete(name);
+      return Boolean(force);
+    }
+  },
+  setAttribute(name, value) { this[name] = String(value); },
+  querySelector(selector) { return selector === '[data-scene-part="harbor-access"]' ? harborSegment : null; }
+};
+scene.renderLighthouseScene(sceneRoot, game.selectWorld(initialWorldState));
+assert.equal(sceneRoot.dataset.harborPath, '0');
+assert.equal(harborSegment.dataset.repaired, 'false');
+assert.equal(sceneClasses.has('has-harbor-repair'), false);
+scene.renderLighthouseScene(sceneRoot, harborOneWorld);
+scene.renderLighthouseScene(sceneRoot, game.selectWorld(game.reduce(harborOneState, { type: 'CHECK_CORRECT', id: 'harbor-1' })));
+assert.equal(sceneRoot.dataset.harborPath, '1');
+assert.equal(harborSegment.dataset.repaired, 'true');
+assert.equal(sceneClasses.has('has-harbor-repair'), true);
+assert.equal(repairClassAdditions, 1, 'duplicate success cannot replay the Harbor restoration transition');
+
 // Regression contract: progress text must live on one solid, AA-safe surface.
 const initialHtml = source('index.html');
 const initialCss = source('styles.css');
+const sceneCss = source('lighthouse-scene.css');
+assert.match(initialHtml, /id="lighthouse-scene"[^>]*class="lighthouse-scene"/);
+assert.match(initialHtml, /href="lighthouse-scene\.css"/);
+assert.match(initialHtml, /src="lighthouse-scene\.js"[^>]*defer/);
+assert.match(source('app.js'), /renderLighthouseScene\([^,]+,\s*game\.selectWorld\(gameState\)\)/, 'app projects canonical state into the scene');
+assert.match(sceneCss, /\.lighthouse-scene[^{]*\.harbor-access[^{]*\{[^}]*transform:/s, 'Harbor repair changes physical position');
+assert.match(sceneCss, /\.lighthouse-scene\.has-harbor-repair[^{]*\.harbor-access[^{]*\{[^}]*transform:/s, 'restored access segment locks into place');
 assert.match(initialHtml, /id="world-progress"[^>]*class="[^"]*progress-surface/);
 assert.match(initialCss, /--progress-surface:\s*#[0-9a-f]{6}/i);
 assert.match(initialCss, /\.progress-surface\s*\{[^}]*background:\s*var\(--progress-surface\)/s);
+
+// Mobile shell keeps one current station visible and reveals the full route on request.
+assert.match(initialHtml, /<details[^>]*class="[^"]*route-disclosure[^"]*"[\s\S]*?<summary>Маршрут<\/summary>[\s\S]*?id="world"/,
+  'the restoration overview is behind an explicit native route disclosure');
+assert.match(initialHtml, /<ol id="station-list"><\/ol>[\s\S]*?<details[^>]*route-disclosure/,
+  'the current station row remains before the optional route overview');
+assert.match(initialCss, /@media \(max-width:\s*760px\)[\s\S]*?\.hero\s*\{[^}]*min-height:\s*(?:88|9\d|10\d|11\d|120)px/s,
+  'mobile hero is a compact 88–120 CSS px visual rail');
+assert.match(initialCss, /@media \(max-width:\s*760px\)[\s\S]*?#station-list li\s*\{[^}]*display:\s*none/s,
+  'mobile route defaults to one station row');
+assert.match(initialCss, /@media \(max-width:\s*760px\)[\s\S]*?#station-list li:has\(\.station-button\[aria-current="step"\]\)\s*\{[^}]*display:\s*list-item/s,
+  'the current station remains visible when the route is closed');
+assert.match(initialCss, /\.map:has\(\.route-disclosure\[open\]\) #station-list li\s*\{[^}]*display:\s*list-item/s,
+  'opening Маршрут reveals learner-controlled station navigation');
+assert.doesNotMatch(initialCss, /\.guide\s*\{[^}]*display:\s*none/s,
+  'responsive layout preserves the live pedagogical support region');
+assert.match(initialCss, /@media \(max-width:\s*760px\)[\s\S]*?body\s*\{[^}]*height:\s*100dvh[^}]*overflow:\s*hidden/s,
+  'the mobile document reserves one viewport for the rail and task scroller');
+assert.match(initialCss, /@media \(max-width:\s*760px\)[\s\S]*?\.hero\s*\{[^}]*position:\s*sticky[^}]*top:\s*0/s,
+  'the visual rail remains continuously visible at every mobile viewport height');
+assert.match(initialCss, /@media \(max-width:\s*760px\)[\s\S]*?\.shell\s*\{[^}]*overflow-y:\s*auto/s,
+  'challenge content scrolls below rather than underneath the visual rail');
+assert.doesNotMatch(initialCss, /@media \(max-width:\s*760px\) and \(min-height:/,
+  'mobile rail visibility cannot be disabled by a viewport-height gate');
+assert.doesNotMatch(initialCss, /body:has\(#diagnostic:not\(:empty\)\) \.hero\s*\{[^}]*position:\s*relative/s,
+  'wrong feedback cannot disable the continuously visible rail');
 
 function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
 function lcmByMultiples(a, b) { for (let n = Math.max(a, b); n <= a * b; n += 1) if (n % a === 0 && n % b === 0) return n; throw new Error('unreachable'); }
@@ -92,6 +186,37 @@ assert.equal(bridge.mixedFraction.mechanicData.kind, 'piece-to-whole');
 assert.match(source('app.js'), /function renderFractionBars\s*\(/);
 assert.match(source('app.js'), /function renderEqualGroupTrays\s*\(/);
 assert.match(source('app.js'), /function renderPieceToWhole\s*\(/);
+// Fraction Bridge has one direct-construction path: controls precede inert stacked results.
+const bridgeApp = source('app.js');
+assert.match(bridgeApp, /function outputField\s*\(/, 'bridge results use one non-editable output primitive');
+assert.doesNotMatch(bridgeApp, /className = 'editable-fraction'/, 'mixed-number construction has no parallel manual-entry path');
+assert.match(bridgeApp, /workspace\.append\(legend, pieces, move, undo, row\)/,
+  'piece construction controls precede the derived stacked result in DOM and focus order');
+assert.match(bridgeApp, /querySelector\('button, input:not\(\[readonly\]\), select, \[data-answer\]'\)/,
+  'wrong or invalid bridge attempts return focus to the direct interaction');
+assert.match(bridgeApp, /if \(item\.answer\.kind === 'choice'\) return elements\['answer-area'\]\.dataset\.choice \|\| '';/,
+  'an untouched comparison is collected as an invalid empty response, not a missing-control error');
+for (const item of [bridge.fractionCompare, bridge.fractionOf, bridge.mixedFraction]) {
+  assertDistinctSupport(item);
+  assert.ok(Array.isArray(item.solution) ? item.solution.length : String(item.solution).trim(), `${item.id}: solution is present`);
+  assert.equal(math.isCorrect(item, ''), false, `${item.id}: empty response is invalid`);
+}
+assert.equal(math.isCorrect(bridge.fractionCompare, bridge.fractionCompare.answer.value), true);
+assert.equal(math.isCorrect(bridge.fractionCompare, bridge.fractionCompare.answer.value === '<' ? '>' : '<'), false);
+assert.equal(math.isCorrect(bridge.fractionOf, String(bridge.fractionOf.answer.value)), true);
+assert.equal(math.isCorrect(bridge.fractionOf, String(bridge.fractionOf.answer.value + 1)), false);
+assert.equal(math.isCorrect(bridge.mixedFraction, {
+  whole: '1',
+  numerator: String(bridge.mixedFraction.answer.value.numerator),
+  denominator: String(bridge.mixedFraction.answer.value.denominator),
+  piecesMoved: bridge.mixedFraction.data.d
+}), true);
+assert.equal(math.isCorrect(bridge.mixedFraction, {
+  whole: '0',
+  numerator: String(bridge.mixedFraction.data.a + bridge.mixedFraction.data.b),
+  denominator: String(bridge.mixedFraction.data.d),
+  piecesMoved: 0
+}), false);
 for (let seed = 0; seed < 10000; seed += 1) {
   const item = math.generateExpedition(seed).prompts[0];
   const lengths = item.data.values.map((value) => String(value).length);
@@ -207,9 +332,10 @@ assert.match(source('app.js'), /if \(math\.isCorrect\(item, response\)\) \{[\s\S
 assert.match(source('app.js'), /reveal-button['"]\]\.addEventListener[\s\S]*?clearPacing\(\);[\s\S]*?type: 'REVEAL_SOLUTION'/s, 'worked-solution completion cancels pending pacing work');
 const prematureFinale = game.reduce(game.createState(1), { type: 'FINALE_PLAY' });
 assert.equal(prematureFinale.finale.lampLit, false);
-assert.match(initialHtml, /id="lighthouse"[^>]*data-lit="false"/);
-assert.match(source('styles.css'), /\.lighthouse\[data-lit="true"\] \.beam[^}]*animation:[^;}]*1\.6s/s);
+assert.match(initialHtml, /id="lighthouse-scene"[^>]*role="img"/);
+assert.match(sceneCss, /\.lighthouse-scene\.is-lit \.beam[^}]*animation:[^;}]*1\.6s/s);
 assert.match(source('styles.css'), /@media \(prefers-reduced-motion: reduce\)/);
+assert.match(sceneCss, /@media \(prefers-reduced-motion: reduce\)/);
 assert.match(initialHtml, /id="finale-status"[^>]*>Маяк запалено — промінь освітлює шлях</);
 assert.match(initialHtml, /class="finale-scene"[^>]*aria-hidden="true"/);
 let replayState = game.createState(6);
