@@ -84,7 +84,7 @@ def hidden(dom: str, element_id: str) -> bool:
 
 
 def main() -> None:
-    manifest = json.loads((ROOT / "activities.json").read_text(encoding="utf-8"))
+    manifest = json.loads((ROOT / "activities-v2.json").read_text(encoding="utf-8"))
     activities = manifest["activities"]
     assert activities, "canonical catalog must contain at least one activity"
     for activity in activities:

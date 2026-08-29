@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "tags": [
+    { "id": "review", "label": "Повторення", "group": "purpose" },
+    { "id": "decimals", "label": "Десяткові дроби", "group": "topic" },
+    { "id": "divisibility", "label": "Подільність", "group": "topic" },
+    { "id": "equations", "label": "Рівняння", "group": "topic" },
+    { "id": "fractions", "label": "Звичайні дроби", "group": "topic" },
+    { "id": "geometry", "label": "Геометрія", "group": "topic" },
+    { "id": "natural-numbers", "label": "Натуральні числа", "group": "topic" },
+    { "id": "word-problems", "label": "Текстові задачі", "group": "topic" },
+    { "id": "game", "label": "Гра", "group": "format" }
+  ],
+  "activities": [
+    {
+      "id": "catchx",
+      "title": "Впіймай Ікса",
+      "subject": "math",
+      "grades": [5, 6],
+      "path": "activities/math/05-catchx/",
+      "summary": "Інтерактивна детективна гра з вісьмома справами про невідомі компоненти та одно- й двокрокові рівняння.",
+      "tags": ["equations", "game"]
+    },
+    {
+      "id": "fraction-kingdom",
+      "title": "Королівство дробів",
+      "subject": "math",
+      "grades": [5, 6],
+      "path": "activities/math/06-fraction-kingdom/",
+      "summary": "Шість інтерактивних рівнів про дроби, їх порівняння, скорочення, додавання та мішані числа.",
+      "tags": ["fractions", "game"]
+    },
+    {
+      "id": "grade5-lighthouse",
+      "title": "Маяк п’ятого класу",
+      "subject": "math",
+      "grades": [5],
+      "path": "activities/math/06-grade5-lighthouse/",
+      "summary": "Шість завдань з математики 5 класу, які крок за кроком засвічують маяк.",
+      "tags": ["review", "decimals", "divisibility", "equations", "fractions", "geometry", "natural-numbers", "word-problems", "game"]
+    },
+    {
+      "id": "grade4-lighthouse",
+      "title": "Маяк четвертого класу",
+      "subject": "math",
+      "grades": [5],
+      "path": "activities/math/07-grade4-lighthouse/",
+      "summary": "Шість завдань для повторення математики 4 класу перед початком 5 класу.",
+      "tags": ["review", "equations", "fractions", "geometry", "natural-numbers", "word-problems", "game"]
+    }
+  ]
+}

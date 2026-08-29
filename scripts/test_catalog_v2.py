@@ -81,7 +81,7 @@ def main() -> None:
     expect_invalid("activity order", lambda d: d["activities"].reverse())
     expect_invalid("bad path subject", lambda d: d["activities"][0].__setitem__("path", "activities/computer-science/06-fraction-kingdom/"))
     expect_invalid("bad grade", lambda d: d["activities"][0].__setitem__("grades", [6, 5]))
-    manifest = json.loads((ROOT / "activities.json").read_text(encoding="utf-8"))
+    manifest = json.loads((ROOT / "activities-v2.json").read_text(encoding="utf-8"))
     lighthouse = next(record for record in manifest["activities"] if record["id"] == "grade5-lighthouse")
     assert lighthouse["grades"] == [5]
     assert lighthouse["summary"] == "Шість завдань з математики 5 класу, які крок за кроком засвічують маяк."

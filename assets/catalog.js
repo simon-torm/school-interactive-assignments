@@ -343,7 +343,7 @@
   async function loadCatalog() {
     showOnly(elements.loading);
     try {
-      const response = await fetch('./activities.json', { cache: 'no-cache', credentials: 'omit' });
+      const response = await fetch('./activities-v2.json', { cache: 'no-cache', credentials: 'omit' });
       if (!response.ok) throw new Error('Manifest request failed');
       const manifest = validateManifest(await response.json());
       activities = manifest.activities;

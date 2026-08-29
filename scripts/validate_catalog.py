@@ -200,7 +200,7 @@ class Validator:
         self.errors.append(f"[{category}] {display}: {message}")
 
     def load_manifest(self) -> None:
-        path = ROOT / "activities.json"
+        path = ROOT / "activities-v2.json"
         try:
             self.manifest = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique_object)
         except (OSError, UnicodeError, json.JSONDecodeError, DuplicateKeyError) as exc:
@@ -210,7 +210,7 @@ class Validator:
 
     def validate_manifest(self) -> None:
         for finding in validate_manifest_data(self.manifest, root=ROOT):
-            self.error("schema", "activities.json", finding)
+            self.error("schema", "activities-v2.json", finding)
         records = self.manifest.get("activities", []) if isinstance(self.manifest, dict) else []
         self.counts["activity_records"] = len(records) if isinstance(records, list) else 0
         self.counts["activity_directories"] = sum(1 for _ in ROOT.glob("activities/*/[0-9][0-9]-*/index.html"))
@@ -315,8 +315,8 @@ class Validator:
 
         catalog_js = (ROOT / "assets/catalog.js").read_text(encoding="utf-8")
         fetches = re.findall(r"\bfetch\s*\(\s*(['\"])(.*?)\1", catalog_js)
-        if [target for _, target in fetches] != ["./activities.json"]:
-            self.error("network", "assets/catalog.js", "fetch targets must be exactly ./activities.json")
+        if [target for _, target in fetches] != ["./activities-v2.json"]:
+            self.error("network", "assets/catalog.js", "fetch targets must be exactly ./activities-v2.json")
         self.counts["approved_fetch_targets"] = len(fetches)
 
     def run(self) -> int:
