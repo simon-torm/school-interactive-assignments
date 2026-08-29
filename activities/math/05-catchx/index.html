@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Впіймай Ікса</title>
+<style>
+  :root{
+    --cork:#2a2013;
+    --cork-2:#332616;
+    --card:#ecdba9;
+    --card-2:#e2cd8f;
+    --ink:#2a1c10;
+    --ink-soft:#5a4527;
+    --paper:#f7ecd2;
+    --brass:#d3a53a;
+    --brass-deep:#9c7621;
+    --twine:#a53a26;
+    --twine-deep:#7c2a1a;
+    --teal:#3f9d7d;
+    --wrong:#d9573c;
+    --shadow: 0 18px 34px -14px rgba(10,6,2,0.65);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--cork);
+    color:var(--paper);
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3{
+    font-family:'Arial Black', 'Arial Narrow', 'Segoe UI', sans-serif;
+    text-wrap:balance;
+    margin:0;
+  }
+
+  .mono{
+    font-family:'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .hand{ font-family:'Segoe Print', 'Comic Sans MS', cursive; }
+
+  button{ font-family:inherit; }
+
+  [hidden]{ display:none !important; }
+
+  :focus-visible{
+    outline:3px solid #0b6b54;
+    outline-offset:3px;
+    box-shadow:0 0 0 6px var(--paper);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:0.001ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:0.001ms !important;
+    }
+  }
+
+  /* ---------- cork background texture ---------- */
+  .corkboard{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(255,255,255,0.05), transparent 60%),
+      radial-gradient(ellipse 50% 35% at 85% 85%, rgba(0,0,0,0.35), transparent 60%),
+      radial-gradient(circle at 50% 50%, var(--cork-2), var(--cork) 75%);
+  }
+  .corkboard::after{
+    content:"";
+    position:absolute; inset:0;
+    opacity:0.5;
+    mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .vignette{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    box-shadow: inset 0 0 22vw rgba(0,0,0,0.55);
+  }
+
+  #app{
+    position:relative;
+    z-index:2;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:clamp(14px,4vw,40px);
+  }
+
+  /* ---------- reusable: pin ---------- */
+  .pin{
+    width:16px; height:16px; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #ffe9ad, var(--brass) 45%, var(--brass-deep) 100%);
+    box-shadow:0 3px 5px rgba(0,0,0,0.55), inset 0 -2px 2px rgba(0,0,0,0.25);
+    position:absolute; left:50%; top:-9px; transform:translateX(-50%);
+    z-index:3;
+  }
+
+  .card-index{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%),
+      var(--card);
+    color:var(--ink);
+    border-radius:6px;
+    box-shadow:var(--shadow);
+    position:relative;
+    padding:clamp(18px,3.4vw,34px);
+  }
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    width:100%;
+    max-width:960px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:18px;
+    color:var(--paper);
+  }
+  .topbar .brand{
+    font-family:'Unbounded',sans-serif;
+    font-size:clamp(15px,2vw,19px);
+    font-weight:800;
+    letter-spacing:0.01em;
+    display:flex; align-items:center; gap:10px;
+  }
+  .brand-x{
+    width:30px;height:30px;
+  }
+  .stars-total{
+    display:flex; align-items:center; gap:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    color:var(--brass);
+    background:rgba(0,0,0,0.28);
+    border:1px solid rgba(211,165,58,0.4);
+    padding:6px 12px;
+    border-radius:999px;
+  }
+  .icon-btn{
+    background:rgba(0,0,0,0.28);
+    border:1px solid rgba(247,236,210,0.25);
+    color:var(--paper);
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background 0.15s, transform 0.15s;
+  }
+  .icon-btn:hover{ background:rgba(0,0,0,0.45); transform:translateY(-1px); }
+  .icon-btn:active{ transform:translateY(0); }
+
+  main{
+    width:100%;
+    max-width:960px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    flex:1;
+  }
+
+  /* ================= COVER ================= */
+  .cover{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:22px;
+    padding-top:clamp(20px,6vh,64px);
+    max-width:640px;
+    margin:0 auto;
+  }
+  .cover-mascot{ width:min(230px,52vw); height:auto; filter:drop-shadow(0 16px 20px rgba(0,0,0,0.5)); }
+  .cover-title{
+    font-size:clamp(38px,7vw,64px);
+    font-weight:900;
+    color:var(--paper);
+    line-height:0.98;
+    letter-spacing:-0.01em;
+  }
+  .cover-title .accent{ color:var(--brass); }
+  .cover-sub{
+    font-size:clamp(15px,2vw,18px);
+    color:#d8c9a5;
+    max-width:46ch;
+    line-height:1.55;
+  }
+  .badge-row{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .badge{
+    background:var(--card);
+    border-radius:999px;
+    padding:6px 14px;
+    font-weight:700;
+    box-shadow:0 6px 12px -6px rgba(0,0,0,0.5);
+    transform:rotate(-1.5deg);
+  }
+  .badge:nth-child(2){ transform:rotate(1.5deg); }
+  .badge:nth-child(3){ transform:rotate(-1deg); }
+  .cta{
+    font-family:'Unbounded',sans-serif;
+    font-weight:800;
+    font-size:clamp(16px,2.2vw,20px);
+    color:var(--paper);
+    background:linear-gradient(180deg, var(--twine), var(--twine-deep));
+    border:none;
+    padding:16px 38px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 12px 24px -8px rgba(165,58,38,0.55), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition:transform 0.15s, box-shadow 0.15s;
+    margin-top:6px;
+  }
+  .cta:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 16px 28px -8px rgba(165,58,38,0.65); }
+  .cta:active{ transform:translateY(0) scale(0.99); }
+  .reset-link{
+    background:none; border:none; color:#d8c9a5; font-size:12.5px; text-decoration:underline;
+    cursor:pointer; opacity:0.85; margin-top:4px;
+  }
+  .reset-link:hover{ opacity:1; }
+
+  /* ================= MAP ================= */
+  .map-wrap{ width:100%; padding-bottom:20px; }
+  .map-intro{ text-align:center; margin-bottom:26px; }
+  .map-intro h2{ font-size:clamp(22px,3.4vw,30px); color:var(--paper); margin-bottom:6px; }
+  .map-intro p{ color:#d8c9a5; font-size:14.5px; max-width:56ch; margin:0 auto; }
+
+  .string-svg{ position:absolute; inset:0; width:100%; height:100%; z-index:0; overflow:visible; }
+  .trail{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:26px 18px;
+    z-index:1;
+  }
+  @media (max-width:620px){
+    .trail{ grid-template-columns:repeat(2,1fr); }
+  }
+
+  .case-node{
+    position:relative;
+    background:var(--card);
+    border-radius:8px;
+    padding:16px 14px 14px;
+    color:var(--ink);
+    cursor:pointer;
+    border:none;
+    text-align:left;
+    box-shadow:var(--shadow);
+    transform:rotate(var(--r,0deg));
+    transition:transform 0.18s, box-shadow 0.18s, filter 0.18s;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .case-node:hover:not(:disabled){ transform:rotate(0deg) translateY(-4px); box-shadow:0 22px 30px -14px rgba(0,0,0,0.7); }
+  .case-node:nth-child(4n+1){ --r:-1.6deg; }
+  .case-node:nth-child(4n+2){ --r:1deg; }
+  .case-node:nth-child(4n+3){ --r:-0.7deg; }
+  .case-node:nth-child(4n+4){ --r:1.7deg; }
+  .case-node:disabled{ cursor:not-allowed; filter:grayscale(0.7) brightness(0.55); }
+
+  .case-node .num{
+    font-family:'Unbounded',sans-serif;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:0.06em;
+    color:var(--twine-deep);
+    text-transform:uppercase;
+  }
+  .case-node .title{
+    font-family:'Unbounded',sans-serif;
+    font-size:14.5px;
+    font-weight:700;
+    line-height:1.25;
+  }
+  .case-node .stars{ display:flex; gap:3px; }
+  .case-node svg.star{ width:15px; height:15px; }
+  .lock-badge{
+    position:absolute; top:10px; right:10px;
+    width:26px; height:26px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ================= CASE / GAMEPLAY ================= */
+  .case-screen{ width:100%; display:flex; flex-direction:column; align-items:center; gap:16px; }
+
+  .case-topline{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    color:var(--paper);
+  }
+  .case-topline h2{ font-size:clamp(16px,2.4vw,20px); }
+  .round-dots{ display:flex; gap:7px; }
+  .round-dots i{
+    width:10px; height:10px; border-radius:50%;
+    background:rgba(247,236,210,0.25);
+    display:block;
+  }
+  .round-dots i.done{ background:var(--teal); }
+  .round-dots i.active{ background:var(--brass); box-shadow:0 0 0 3px rgba(211,165,58,0.25); }
+
+  .case-file{
+    width:100%;
+    max-width:640px;
+    position:relative;
+    margin-top:6px;
+  }
+  .brief-note{
+    font-family:'Caveat',cursive;
+    font-size:19px;
+    color:#e8d9ab;
+    text-align:center;
+    max-width:52ch;
+    margin:0 auto 8px;
+    line-height:1.3;
+  }
+
+  .scale-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom:6px;
+  }
+  .scale-svg{ width:min(360px,90%); height:auto; }
+  .pan-label{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:15px;
+    fill:var(--ink);
+  }
+  .pan-label .var{ font-style:italic; fill:var(--twine-deep); }
+
+  .eq-display{
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:clamp(24px,4vw,32px);
+    color:var(--ink);
+    margin:10px 0 4px;
+    letter-spacing:0.02em;
+  }
+  .eq-display .var{ font-style:italic; color:var(--twine-deep); }
+
+  .step-prompt{
+    text-align:center;
+    font-size:14.5px;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin-bottom:14px;
+  }
+
+  .options{
+    display:grid;
+    gap:10px;
+    max-width:460px;
+    margin:0 auto;
+  }
+  .opt-btn{
+    background:var(--paper);
+    border:2px solid #d8c48c;
+    color:var(--ink);
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:14.5px;
+    font-weight:600;
+    text-align:left;
+    cursor:pointer;
+    transition:border-color 0.15s, transform 0.12s, background 0.15s;
+  }
+  .opt-btn:hover{ border-color:var(--brass-deep); transform:translateY(-1px); }
+  .opt-btn:active{ transform:translateY(0); }
+  .opt-btn.correct{ background:#dff2e7; border-color:var(--teal); }
+  .opt-btn.wrong{ background:#f7ddd5; border-color:var(--wrong); }
+  .opt-btn:disabled{ cursor:default; }
+
+  .final-input{
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    margin-top:6px;
+  }
+  .final-input label{ font-size:14px; font-weight:700; color:var(--ink); }
+  .final-row{ display:flex; gap:10px; }
+  .final-row input{
+    width:120px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:22px;
+    font-weight:700;
+    text-align:center;
+    padding:10px;
+    border-radius:8px;
+    border:2px solid #d8c48c;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .catch-btn{
+    font-family:'Unbounded',sans-serif;
+    font-weight:800;
+    font-size:14.5px;
+    color:var(--paper);
+    background:linear-gradient(180deg, var(--twine), var(--twine-deep));
+    border:none;
+    padding:0 22px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .catch-btn:hover{ filter:brightness(1.08); }
+
+  .below-row{
+    display:flex; justify-content:center; gap:12px; margin-top:16px; flex-wrap:wrap;
+  }
+  .ghost-btn{
+    background:transparent;
+    border:1.5px dashed var(--ink-soft);
+    color:var(--ink-soft);
+    padding:7px 14px;
+    border-radius:999px;
+    font-size:12.5px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .ghost-btn:hover{ background:rgba(0,0,0,0.05); }
+
+  .sticky-hint{
+    margin:14px auto 0;
+    max-width:420px;
+    background:#f6e07a;
+    color:#453510;
+    padding:12px 16px;
+    border-radius:3px;
+    font-size:13.5px;
+    font-weight:600;
+    box-shadow:0 8px 14px -8px rgba(0,0,0,0.5);
+    transform:rotate(-1.2deg);
+    position:relative;
+  }
+  .sticky-hint::before{
+    content:"";
+    position:absolute; top:-8px; left:50%; transform:translateX(-50%) rotate(-4deg);
+    width:34px; height:14px; background:rgba(240,224,150,0.55);
+  }
+
+  .mistake-flag{
+    font-size:12px; color:var(--twine-deep); font-family:'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  }
+
+  /* ---------- shake / tip / pulse ---------- */
+  .shake{ animation:shakeKf 0.42s; }
+  @keyframes shakeKf{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-8px); }
+    40%{ transform:translateX(7px); }
+    60%{ transform:translateX(-5px); }
+    80%{ transform:translateX(4px); }
+  }
+  .tip-left #beamGroup{ animation:tipLeftKf 0.6s ease-in-out; }
+  .tip-right #beamGroup{ animation:tipRightKf 0.6s ease-in-out; }
+  @keyframes tipLeftKf{
+    0%,100%{ transform:rotate(0deg); }
+    35%{ transform:rotate(-11deg); }
+    70%{ transform:rotate(4deg); }
+  }
+  @keyframes tipRightKf{
+    0%,100%{ transform:rotate(0deg); }
+    35%{ transform:rotate(11deg); }
+    70%{ transform:rotate(-4deg); }
+  }
+  @media (prefers-reduced-motion: no-preference){
+    #beamGroup{ animation:swayKf 4.5s ease-in-out infinite; transform-origin:180px 92px; }
+  }
+  #beamGroup{ transform-origin:180px 92px; }
+  @keyframes swayKf{
+    0%,100%{ transform:rotate(-0.6deg); }
+    50%{ transform:rotate(0.6deg); }
+  }
+  .pulse{ animation:pulseKf 0.5s; }
+  @keyframes pulseKf{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.14); }
+    100%{ transform:scale(1); }
+  }
+
+  .stamp{
+    position:fixed;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%) rotate(-9deg) scale(2.6);
+    font-family:'Unbounded',sans-serif;
+    font-weight:900;
+    font-size:clamp(24px,5vw,40px);
+    color:var(--teal);
+    border:6px solid var(--teal);
+    padding:14px 30px;
+    border-radius:10px;
+    background:rgba(15,20,17,0.06);
+    opacity:0;
+    z-index:20;
+    pointer-events:none;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+  }
+  .stamp.show{ animation:stampKf 1.15s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes stampKf{
+    0%{ opacity:0; transform:translate(-50%,-50%) rotate(-9deg) scale(3.4); }
+    35%{ opacity:1; transform:translate(-50%,-50%) rotate(-9deg) scale(0.94); }
+    45%{ transform:translate(-50%,-50%) rotate(-9deg) scale(1.05); }
+    80%{ opacity:1; transform:translate(-50%,-50%) rotate(-9deg) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-50%) rotate(-9deg) scale(1); }
+  }
+
+  .spark{
+    position:fixed; width:8px; height:8px; border-radius:50%;
+    background:var(--brass);
+    left:50%; top:50%;
+    z-index:19;
+    pointer-events:none;
+    animation:sparkKf 0.9s ease-out forwards;
+  }
+  @keyframes sparkKf{
+    to{
+      transform:translate(calc(cos(var(--ang)) * var(--dist)), calc(sin(var(--ang)) * var(--dist))) scale(0);
+      opacity:0;
+    }
+  }
+
+  /* ================= LEVEL COMPLETE / FINALE ================= */
+  .complete-screen{
+    display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;
+    padding-top:6vh;
+  }
+  .complete-screen h2{ font-size:clamp(24px,4vw,34px); color:var(--paper); }
+  .stars-big{ display:flex; gap:10px; }
+  .stars-big svg{ width:46px; height:46px; }
+  .complete-screen p{ color:#d8c9a5; max-width:44ch; font-size:14.5px; }
+
+  .finale-card{
+    max-width:520px;
+    text-align:center;
+    padding:34px 28px;
+  }
+  .finale-card h2{ font-size:clamp(22px,3.6vw,30px); margin-bottom:8px; }
+  .finale-card .hand{ font-size:20px; color:var(--ink-soft); }
+  .finale-total{
+    font-family:'Unbounded',sans-serif;
+    font-weight:900;
+    font-size:44px;
+    color:var(--twine-deep);
+    margin:10px 0;
+  }
+
+  footer.credit{
+    margin-top:auto;
+    padding-top:26px;
+    font-size:11.5px;
+    color:#b8a77f;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="corkboard"></div>
+<div class="vignette"></div>
+
+<div id="app">
+  <div class="topbar" id="topbar" hidden>
+    <div class="brand">
+      <svg class="brand-x" viewBox="0 0 40 40" aria-hidden="true">
+        <rect x="4" y="4" width="32" height="32" rx="7" fill="#7c2a1a"/>
+        <path d="M12 12 L28 28 M28 12 L12 28" stroke="#f7ecd2" stroke-width="5.5" stroke-linecap="round"/>
+      </svg>
+      Впіймай Ікса
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="stars-total" id="starsTotal">★ 0</div>
+      <button class="icon-btn" id="mapBtn">Карта справ</button>
+    </div>
+  </div>
+
+  <main id="main"></main>
+
+  <footer class="credit">Ікс-агенція · рівняння для 5–6 класу</footer>
+</div>
+
+<div class="stamp" id="stamp">РОЗКРИТО</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ========================= utils ========================= */
+  function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function choice(arr){ return arr[rand(0,arr.length-1)]; }
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t=a[i]; a[i]=a[j]; a[j]=t;
+    }
+    return a;
+  }
+  function esc(s){ return String(s); }
+  function varSpan(){ return '<span class="var">x</span>'; }
+
+  /* ========================= progress (per-viewer, best effort) ========================= */
+  var STORAGE_KEY = 'catchx-progress-v1';
+  var memProgress = null;
+  function emptyProgress(){ return { unlocked:1, stars:{} }; }
+  function normalizeProgress(candidate){
+    var safe = emptyProgress();
+    if(!candidate || typeof candidate !== 'object') return safe;
+    if(typeof candidate.unlocked === 'number' && isFinite(candidate.unlocked) && Math.floor(candidate.unlocked) === candidate.unlocked && candidate.unlocked >= 1 && candidate.unlocked <= 8){
+      safe.unlocked = candidate.unlocked;
+    }
+    if(candidate.stars && typeof candidate.stars === 'object'){
+      for(var id=1;id<=8;id++){
+        var value = candidate.stars[id];
+        if(typeof value === 'number' && isFinite(value) && Math.floor(value) === value && value >= 1 && value <= 3){
+          safe.stars[id] = value;
+        }
+      }
+    }
+    return safe;
+  }
+  function loadProgress(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return normalizeProgress(JSON.parse(raw));
+    }catch(e){}
+    return normalizeProgress(memProgress);
+  }
+  function saveProgress(p){
+    memProgress = p;
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }catch(e){}
+  }
+
+  /* ========================= equation generators ========================= */
+  // Every generator returns { steps:[...], secretX:Number, brief:String }
+  // step: { type:'op'|'rule', eqBefore, prompt, options:[{label,correct,opType,opAmount}], ruleName, ruleText, isLast }
+
+  function opStep(eqBefore, correctLabel, correctType, correctAmount, distractors, ruleName, ruleText, isLast){
+    var opts = shuffle([
+      { label:correctLabel, correct:true, opType:correctType, opAmount:correctAmount },
+      { label:distractors[0], correct:false },
+      { label:distractors[1], correct:false }
+    ]);
+    return {
+      type:'op',
+      eqBefore:eqBefore,
+      prompt:'Яку дію виконати з обома шальками терезів, щоб звільнити Ікс?',
+      options:opts,
+      ruleName:ruleName,
+      ruleText:ruleText,
+      isLast: !!isLast
+    };
+  }
+
+  function ruleStep(eqBefore, correctLabel, distractors, ruleName, ruleText){
+    var opts = shuffle([
+      { label:correctLabel, correct:true },
+      { label:distractors[0], correct:false },
+      { label:distractors[1], correct:false }
+    ]);
+    return {
+      type:'rule',
+      eqBefore:eqBefore,
+      prompt:'Яке правило допоможе знайти Ікс?',
+      options:opts,
+      ruleName:ruleName,
+      ruleText:ruleText,
+      isLast:true
+    };
+  }
+
+  function genAddend(){
+    var x = rand(1,20), a = rand(2,20), b = x+a;
+    var eq = Math.random()<0.5 ? (varSpan()+' + '+a+' = '+b) : (a+' + '+varSpan()+' = '+b);
+    var rt = 'Щоб знайти невідомий доданок, від суми віднімають відомий доданок: x = '+b+' − '+a+' = '+(b-a)+'.';
+    var step = opStep(eq, 'Відняти '+a+' з обох шальок', 'sub', a,
+      ['Додати '+a+' до обох шальок', 'Помножити обидві шальки на '+a],
+      'Невідомий доданок', rt, true);
+    return { steps:[step], secretX:x, brief:'У свідка зник доданок прямо із суми. Знайди його вагу на терезах правосуддя.' };
+  }
+
+  function genMinuend(){
+    var a = rand(1,20), x = a + rand(2,20), b = x-a;
+    var eq = varSpan()+' − '+a+' = '+b;
+    var rt = 'Щоб знайти невідоме зменшуване, до різниці додають відʼємник: x = '+b+' + '+a+' = '+(b+a)+'.';
+    var step = opStep(eq, 'Додати '+a+' до обох шальок', 'add', a,
+      ['Відняти '+a+' з обох шальок', 'Поділити обидві шальки на '+a],
+      'Невідоме зменшуване', rt, true);
+    return { steps:[step], secretX:x, brief:'Хтось забрав зменшуване просто з протоколу справи. Відновіть його!' };
+  }
+
+  function genSubtrahend(){
+    var x = rand(1,20), a = x + rand(2,20), b = a-x;
+    var eq = a+' − '+varSpan()+' = '+b;
+    var rt = 'Щоб знайти невідомий відʼємник, від зменшуваного віднімають різницю: x = '+a+' − '+b+' = '+(a-b)+'.';
+    var step = ruleStep(eq, 'x = '+a+' − '+b, ['x = '+b+' − '+a, 'x = '+a+' + '+b],
+      'Невідомий відʼємник', rt);
+    return { steps:[step], secretX:x, brief:'Відʼємник переховується в тіні різниці. Виведіть його на світло.' };
+  }
+
+  function genFactor(){
+    var x = rand(2,12), a = rand(2,12), b = x*a;
+    var eq = Math.random()<0.5 ? (varSpan()+' · '+a+' = '+b) : (a+' · '+varSpan()+' = '+b);
+    var rt = 'Щоб знайти невідомий множник, добуток ділять на відомий множник: x = '+b+' : '+a+' = '+x+'.';
+    var step = opStep(eq, 'Поділити обидві шальки на '+a, 'div', a,
+      ['Помножити обидві шальки на '+a, 'Відняти '+a+' з обох шальок'],
+      'Невідомий множник', rt, true);
+    return { steps:[step], secretX:x, brief:'Добуток є, а другий множник зник безвісти. Розплутайте цю справу!' };
+  }
+
+  function genDividend(){
+    var a = rand(2,12), q = rand(2,12), x = a*q;
+    var eq = varSpan()+' : '+a+' = '+q;
+    var rt = 'Щоб знайти невідоме ділене, дільник множать на частку: x = '+a+' · '+q+' = '+x+'.';
+    var step = opStep(eq, 'Помножити обидві шальки на '+a, 'mul', a,
+      ['Поділити обидві шальки на '+a, 'Додати '+a+' до обох шальок'],
+      'Невідоме ділене', rt, true);
+    return { steps:[step], secretX:x, brief:'Частка каже правду, але ділене хтось підмінив. Виведіть Ікса на чисту воду.' };
+  }
+
+  function genDivisor(){
+    var x = rand(2,12), q = rand(2,12), a = x*q;
+    var eq = a+' : '+varSpan()+' = '+q;
+    var rt = 'Щоб знайти невідомий дільник, ділене ділять на частку: x = '+a+' : '+q+' = '+x+'.';
+    var step = ruleStep(eq, 'x = '+a+' : '+q, ['x = '+q+' : '+a, 'x = '+a+' · '+q],
+      'Невідомий дільник', rt);
+    return { steps:[step], secretX:x, brief:'Дільник маскується під частку. Не дайте йому втекти з двору суду!' };
+  }
+
+  function genMixed(){
+    var g = choice([genAddend, genMinuend, genSubtrahend, genFactor, genDividend, genDivisor]);
+    var r = g();
+    r.brief = 'В архіві переплуталися старі справи. Розберіться з наступною!';
+    return r;
+  }
+
+  function genTwoStepA(){ // a*x + c = B
+    var a = rand(2,9), x = rand(1,15), c = rand(2,20), B = a*x + c;
+    var s1 = opStep(a+' · '+varSpan()+' + '+c+' = '+B, 'Відняти '+c+' з обох шальок', 'sub', c,
+      ['Додати '+c+' до обох шальок', 'Поділити обидві шальки на '+c],
+      'Крок 1 · спрощення', 'Спочатку прибираємо зайве число з обох шальок, щоб лишився тільки добуток з Іксом: '+a+' · x = '+(B-c)+'.', false);
+    var s2 = opStep(a+' · '+varSpan()+' = '+(B-c), 'Поділити обидві шальки на '+a, 'div', a,
+      ['Помножити обидві шальки на '+a, 'Відняти '+a+' з обох шальок'],
+      'Крок 2 · невідомий множник', 'Щоб знайти невідомий множник, добуток ділять на відомий множник: x = '+(B-c)+' : '+a+' = '+x+'.', true);
+    return { steps:[s1,s2], secretX:x, brief:'Найскладніша справа Ікс-агенції. Тут знадобляться ДВІ дії поспіль!' };
+  }
+  function genTwoStepB(){ // a*x - c = B
+    var a = rand(2,9), x = rand(1,15), maxC = Math.max(1, a*x-1), c = rand(1, Math.min(20,maxC)), B = a*x - c;
+    var s1 = opStep(a+' · '+varSpan()+' − '+c+' = '+B, 'Додати '+c+' до обох шальок', 'add', c,
+      ['Відняти '+c+' з обох шальок', 'Поділити обидві шальки на '+c],
+      'Крок 1 · спрощення', 'Спочатку прибираємо зайве число з обох шальок, щоб лишився тільки добуток з Іксом: '+a+' · x = '+(B+c)+'.', false);
+    var s2 = opStep(a+' · '+varSpan()+' = '+(B+c), 'Поділити обидві шальки на '+a, 'div', a,
+      ['Помножити обидві шальки на '+a, 'Відняти '+a+' з обох шальок'],
+      'Крок 2 · невідомий множник', 'Щоб знайти невідомий множник, добуток ділять на відомий множник: x = '+(B+c)+' : '+a+' = '+x+'.', true);
+    return { steps:[s1,s2], secretX:x, brief:'Найскладніша справа Ікс-агенції. Тут знадобляться ДВІ дії поспіль!' };
+  }
+  function genTwoStepC(){ // x/a + c = B
+    var a = rand(2,9), q = rand(1,15), c = rand(2,20), x = a*q, B = q+c;
+    var s1 = opStep(varSpan()+' : '+a+' + '+c+' = '+B, 'Відняти '+c+' з обох шальок', 'sub', c,
+      ['Додати '+c+' до обох шальок', 'Поділити обидві шальки на '+c],
+      'Крок 1 · спрощення', 'Спочатку прибираємо зайве число з обох шальок, щоб лишилась тільки частка з Іксом: x : '+a+' = '+(B-c)+'.', false);
+    var s2 = opStep(varSpan()+' : '+a+' = '+(B-c), 'Помножити обидві шальки на '+a, 'mul', a,
+      ['Поділити обидві шальки на '+a, 'Додати '+a+' до обох шальок'],
+      'Крок 2 · невідоме ділене', 'Щоб знайти невідоме ділене, дільник множать на частку: x = '+a+' · '+(B-c)+' = '+x+'.', true);
+    return { steps:[s1,s2], secretX:x, brief:'Найскладніша справа Ікс-агенції. Тут знадобляться ДВІ дії поспіль!' };
+  }
+  function genTwoStepD(){ // x/a - c = B
+    var a = rand(2,9), q = rand(2,15), c = rand(1,q-1), x = a*q, B = q-c;
+    var s1 = opStep(varSpan()+' : '+a+' − '+c+' = '+B, 'Додати '+c+' до обох шальок', 'add', c,
+      ['Відняти '+c+' з обох шальок', 'Поділити обидві шальки на '+c],
+      'Крок 1 · спрощення', 'Спочатку прибираємо зайве число з обох шальок, щоб лишилась тільки частка з Іксом: x : '+a+' = '+(B+c)+'.', false);
+    var s2 = opStep(varSpan()+' : '+a+' = '+(B+c), 'Помножити обидві шальки на '+a, 'mul', a,
+      ['Поділити обидві шальки на '+a, 'Додати '+a+' до обох шальок'],
+      'Крок 2 · невідоме ділене', 'Щоб знайти невідоме ділене, дільник множать на частку: x = '+a+' · '+(B+c)+' = '+x+'.', true);
+    return { steps:[s1,s2], secretX:x, brief:'Найскладніша справа Ікс-агенції. Тут знадобляться ДВІ дії поспіль!' };
+  }
+  function genTwoStep(){
+    return choice([genTwoStepA, genTwoStepB, genTwoStepC, genTwoStepD])();
+  }
+
+  var LEVELS = [
+    { id:1, title:'Справа про невідомий доданок', short:'Невідомий доданок', gen:genAddend },
+    { id:2, title:'Справа про зникле зменшуване', short:'Невідоме зменшуване', gen:genMinuend },
+    { id:3, title:'Справа про тіньового відʼємника', short:'Невідомий відʼємник', gen:genSubtrahend },
+    { id:4, title:'Справа про загублений множник', short:'Невідомий множник', gen:genFactor },
+    { id:5, title:'Справа про підмінене ділене', short:'Невідоме ділене', gen:genDividend },
+    { id:6, title:'Справа про хитрого дільника', short:'Невідомий дільник', gen:genDivisor },
+    { id:7, title:'Змішана справа архіву', short:'Змішані рівняння', gen:genMixed },
+    { id:8, title:'Головна справа Ікс-агенції', short:'Два кроки', gen:genTwoStep }
+  ];
+  var ROUNDS_PER_LEVEL = 3;
+
+  /* ========================= state ========================= */
+  var state = {
+    progress: loadProgress(),
+    current: null
+  };
+  var viewToken = 0;
+
+  function totalStars(){
+    var t=0;
+    for(var k in state.progress.stars){ t += state.progress.stars[k]; }
+    return t;
+  }
+
+  function calcStars(mistakes, hints){
+    var penalty = mistakes + hints;
+    if(penalty === 0) return 3;
+    if(penalty <= 3) return 2;
+    return 1;
+  }
+
+  function starSvg(filled){
+    var fill = filled ? 'var(--brass)' : 'none';
+    var stroke = filled ? 'var(--brass-deep)' : '#9c8a5f';
+    return '<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17.6 5.9 21l1.5-6.8L2.2 9.5l6.9-.7z" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+  }
+
+  /* ========================= render: shell ========================= */
+  var mainEl = document.getElementById('main');
+  var topbarEl = document.getElementById('topbar');
+  var starsTotalEl = document.getElementById('starsTotal');
+
+  function refreshTopbar(){
+    starsTotalEl.innerHTML = starSvg(true).replace('class="star"','class="star" style="width:14px;height:14px;vertical-align:-2px"');
+    starsTotalEl.appendChild(document.createTextNode(' ' + totalStars()));
+  }
+
+  document.getElementById('mapBtn').addEventListener('click', function(){ renderMap(); });
+
+  /* ========================= COVER ========================= */
+  function renderCover(){
+    viewToken++;
+    topbarEl.hidden = true;
+    mainEl.innerHTML =
+      '<section class="cover">'+
+        '<svg class="cover-mascot" viewBox="0 0 200 200" aria-hidden="true">'+
+          '<ellipse cx="100" cy="178" rx="62" ry="10" fill="rgba(0,0,0,0.35)"/>'+
+          '<rect x="34" y="34" width="132" height="132" rx="26" fill="#7c2a1a"/>'+
+          '<rect x="34" y="34" width="132" height="132" rx="26" fill="none" stroke="#d3a53a" stroke-width="4"/>'+
+          '<path d="M62 62 L138 138 M138 62 L62 138" stroke="#f7ecd2" stroke-width="16" stroke-linecap="round"/>'+
+          '<circle cx="100" cy="100" r="15" fill="#f6e07a" stroke="#2a1c10" stroke-width="3"/>'+
+          '<circle cx="94" cy="98" r="2.6" fill="#2a1c10"/><circle cx="106" cy="98" r="2.6" fill="#2a1c10"/>'+
+          '<path d="M93 105 q7 5 14 0" stroke="#2a1c10" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+          '<path d="M70 46 q30 -22 60 0 l-4 14 q-26 -16 -52 0z" fill="#2a1c10"/>'+
+        '</svg>'+
+        '<h1 class="cover-title">Впіймай<br><span class="accent">Ікса</span></h1>'+
+        '<p class="cover-sub">Ти — найкращий детектив Ікс-агенції. У кожній справі число Ікс ховається за рівнянням. Стеж за терезами, обирай правильну дію — і виводь Ікса на чисту воду.</p>'+
+        '<div class="badge-row">'+
+          '<span class="badge">8 справ</span>'+
+          '<span class="badge">терези-детектор</span>'+
+          '<span class="badge">5–6 клас</span>'+
+        '</div>'+
+        '<button class="cta" id="startBtn">Відкрити справу №1</button>'+
+        (totalStars()>0 ? '<button class="reset-link" id="resetBtn">Скинути прогрес агенції</button>' : '')+
+      '</section>';
+    document.getElementById('startBtn').addEventListener('click', renderMap);
+    var rb = document.getElementById('resetBtn');
+    if(rb) rb.addEventListener('click', function(){
+      if(confirm('Скинути весь прогрес і почати агенцію заново?')){
+        state.progress = { unlocked:1, stars:{} };
+        saveProgress(state.progress);
+        renderCover();
+      }
+    });
+  }
+
+  /* ========================= MAP ========================= */
+  function renderMap(){
+    viewToken++;
+    topbarEl.hidden = false;
+    refreshTopbar();
+    var cards = LEVELS.map(function(lvl){
+      var locked = lvl.id > state.progress.unlocked;
+      var stars = state.progress.stars[lvl.id] || 0;
+      var starsHtml = '<div class="stars">'+starSvg(stars>=1)+starSvg(stars>=2)+starSvg(stars>=3)+'</div>';
+      return '<button class="case-node" data-id="'+lvl.id+'" '+(locked?'disabled':'')+'>'+
+        (locked ? '<span class="lock-badge"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 10V8a6 6 0 0112 0v2m-14 0h16v10H4V10z" fill="none" stroke="#5a4527" stroke-width="2" stroke-linejoin="round"/></svg></span>' : '')+
+        '<span class="num">Справа №'+lvl.id+'</span>'+
+        '<span class="title">'+lvl.title+'</span>'+
+        (locked ? '<span style="font-size:12px;color:var(--ink-soft);font-weight:600;">Розкрийте попередню справу</span>' : starsHtml)+
+      '</button>';
+    }).join('');
+
+    mainEl.innerHTML =
+      '<section class="map-wrap">'+
+        '<div class="map-intro"><h2>Архів справ</h2><p>Обирай справу і виводь Ікса на чисту воду. Кожна справа вчить новому правилу пошуку невідомого.</p></div>'+
+        '<div class="trail">'+cards+'</div>'+
+      '</section>';
+
+    Array.prototype.forEach.call(mainEl.querySelectorAll('.case-node'), function(btn){
+      btn.addEventListener('click', function(){
+        if(btn.disabled) return;
+        openLevel(parseInt(btn.getAttribute('data-id'),10));
+      });
+    });
+  }
+
+  /* ========================= CASE / GAMEPLAY ========================= */
+  function openLevel(id){
+    viewToken++;
+    state.current = {
+      levelId:id,
+      roundIndex:0,
+      levelMistakes:0,
+      levelHints:0
+    };
+    loadRound();
+  }
+
+  function loadRound(){
+    viewToken++;
+    var lvl = LEVELS[state.current.levelId-1];
+    var problem = lvl.gen();
+    state.current.problem = problem;
+    state.current.stepIndex = 0;
+    state.current.roundMistakes = 0;
+    state.current.roundHintUsed = false;
+    state.current.roundResolved = false;
+    renderCaseScreen();
+  }
+
+  function renderCaseScreen(){
+    topbarEl.hidden = false;
+    refreshTopbar();
+    var lvl = LEVELS[state.current.levelId-1];
+    var c = state.current;
+    var dots = '';
+    for(var i=0;i<ROUNDS_PER_LEVEL;i++){
+      var cls = i<c.roundIndex ? 'done' : (i===c.roundIndex ? 'active' : '');
+      dots += '<i class="'+cls+'"></i>';
+    }
+
+    mainEl.innerHTML =
+      '<section class="case-screen">'+
+        '<div class="case-topline">'+
+          '<h2>Справа №'+lvl.id+' · '+lvl.short+'</h2>'+
+          '<div class="round-dots" role="img" aria-label="Раунд '+(c.roundIndex+1)+' із '+ROUNDS_PER_LEVEL+'">'+dots+'</div>'+
+        '</div>'+
+        '<div class="brief-note">«'+c.problem.brief+'»</div>'+
+        '<div class="card-index case-file"><span class="pin"></span>'+
+          '<div class="scale-wrap">'+scaleSvg()+'</div>'+
+          '<div id="stepArea"></div>'+
+          '<div class="below-row">'+
+            '<button class="ghost-btn" id="hintBtn">Підказка детектива</button>'+
+            '<button class="ghost-btn" id="backBtn">До карти справ</button>'+
+          '</div>'+
+          '<div id="hintArea"></div>'+
+        '</div>'+
+      '</section>';
+
+    document.getElementById('backBtn').addEventListener('click', renderMap);
+    document.getElementById('hintBtn').addEventListener('click', showHint);
+    renderStep();
+  }
+
+  function scaleSvg(){
+    return '<svg class="scale-svg" viewBox="0 0 360 180" aria-hidden="true">'+
+      '<rect x="172" y="92" width="16" height="66" fill="#8a6a2e" rx="3"/>'+
+      '<polygon points="150,158 210,158 190,178 170,178" fill="#6b5324"/>'+
+      '<g id="beamGroup">'+
+        '<rect x="30" y="88" width="300" height="8" rx="4" fill="#8a6a2e"/>'+
+        '<circle cx="180" cy="92" r="9" fill="#d3a53a" stroke="#6b5324" stroke-width="2"/>'+
+        '<line x1="55" y1="94" x2="55" y2="132" stroke="#8a6a2e" stroke-width="3"/>'+
+        '<line x1="305" y1="94" x2="305" y2="132" stroke="#8a6a2e" stroke-width="3"/>'+
+        '<g id="panLeft">'+
+          '<path d="M15 132 q40 34 80 0 z" fill="#ecdba9" stroke="#8a6a2e" stroke-width="3"/>'+
+          '<text id="panLeftText" class="pan-label" x="55" y="126" text-anchor="middle"></text>'+
+        '</g>'+
+        '<g id="panRight">'+
+          '<path d="M265 132 q40 34 80 0 z" fill="#ecdba9" stroke="#8a6a2e" stroke-width="3"/>'+
+          '<text id="panRightText" class="pan-label" x="305" y="126" text-anchor="middle"></text>'+
+        '</g>'+
+      '</g>'+
+    '</svg>';
+  }
+
+  function splitEquationForPans(eqHtml){
+    // eqHtml like "x + 7 = 15" (var wrapped in span) — split on ' = '
+    var idx = eqHtml.indexOf(' = ');
+    if(idx===-1) return ['', ''];
+    return [eqHtml.slice(0, idx), eqHtml.slice(idx+3)];
+  }
+  function stripTags(html){
+    return html.replace(/<[^>]+>/g,'');
+  }
+
+  function updatePans(eqHtml, pulse){
+    var parts = splitEquationForPans(eqHtml);
+    var lt = document.getElementById('panLeftText');
+    var rt = document.getElementById('panRightText');
+    if(lt) lt.textContent = stripTags(parts[0]);
+    if(rt) rt.textContent = stripTags(parts[1]);
+    if(pulse){
+      [lt,rt].forEach(function(el){
+        if(!el) return;
+        el.parentNode.classList.remove('pulse');
+        void el.parentNode.offsetWidth;
+        el.parentNode.classList.add('pulse');
+      });
+    }
+  }
+
+  function renderStep(){
+    var c = state.current;
+    var step = c.problem.steps[c.stepIndex];
+    updatePans(step.eqBefore, false);
+
+    var html =
+      '<div class="eq-display">'+step.eqBefore+'</div>'+
+      '<div class="step-prompt">'+step.prompt+'</div>'+
+      '<div class="options" id="optionsWrap">'+
+        step.options.map(function(o,i){
+          return '<button class="opt-btn" data-i="'+i+'">'+o.label+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="mistake-flag" style="text-align:center;margin-top:10px;" id="mistakeFlag" aria-live="polite"></div>';
+
+    document.getElementById('stepArea').innerHTML = html;
+    document.getElementById('hintArea').innerHTML = '';
+    updateMistakeFlag();
+
+    Array.prototype.forEach.call(document.querySelectorAll('.opt-btn'), function(btn){
+      btn.addEventListener('click', function(){ onOptionClick(step, parseInt(btn.getAttribute('data-i'),10)); });
+    });
+  }
+
+  function updateMistakeFlag(){
+    var c = state.current;
+    var el = document.getElementById('mistakeFlag');
+    if(!el) return;
+    el.textContent = c.roundMistakes>0 ? ('спроб з помилкою: '+c.roundMistakes) : '';
+  }
+
+  function onOptionClick(step, idx){
+    var c = state.current;
+    var token = viewToken;
+    var opt = step.options[idx];
+    var buttons = document.querySelectorAll('.opt-btn');
+    Array.prototype.forEach.call(buttons, function(b){ b.disabled = true; });
+
+    if(opt.correct){
+      buttons[idx].classList.add('correct');
+      var caseFile = document.querySelector('.case-file');
+      caseFile.classList.remove('tip-left','tip-right');
+
+      if(step.isLast){
+        setTimeout(function(){
+          if(token === viewToken && state.current === c) showFinalInput(step);
+        }, 450);
+      }else{
+        setTimeout(function(){
+          if(token !== viewToken || state.current !== c) return;
+          c.stepIndex++;
+          renderStep();
+        }, 700);
+      }
+    }else{
+      buttons[idx].classList.add('wrong');
+      c.roundMistakes++;
+      updateMistakeFlag();
+      var caseFile2 = document.querySelector('.case-file');
+      caseFile2.classList.remove('shake');
+      void caseFile2.offsetWidth;
+      caseFile2.classList.add('shake');
+      setTimeout(function(){
+        Array.prototype.forEach.call(buttons, function(b){ b.disabled=false; b.classList.remove('wrong'); });
+      }, 500);
+    }
+  }
+
+  function showFinalInput(step){
+    var stepArea = document.getElementById('stepArea');
+    var leftSide = varSpan()+' = ?';
+    stepArea.innerHTML =
+      '<div class="eq-display">'+leftSide+'</div>'+
+      '<div class="step-prompt">Введи число і впіймай Ікса!</div>'+
+      '<div class="final-input">'+
+        '<div class="final-row">'+
+          '<input type="number" id="finalGuess" inputmode="numeric" aria-label="Значення Ікса">'+
+          '<button class="catch-btn" id="catchBtn">Впіймати!</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="mistake-flag" style="text-align:center;margin-top:10px;" id="mistakeFlag" aria-live="polite"></div>';
+    updatePans(varSpan()+' = ?', false);
+    updateMistakeFlag();
+
+    var input = document.getElementById('finalGuess');
+    var catchButton = document.getElementById('catchBtn');
+    input.focus();
+    function submit(){
+      var c = state.current;
+      if(!c || c.roundResolved) return;
+      var raw = input.value.trim();
+      if(!/^-?\d+$/.test(raw)){ input.focus(); return; }
+      var v = Number(raw);
+      if(v === c.problem.secretX){
+        c.roundResolved = true;
+        input.disabled = true;
+        catchButton.disabled = true;
+        updatePans(varSpan()+' = '+v, true);
+        celebrate();
+      }else{
+        var c2 = state.current;
+        c2.roundMistakes++;
+        updateMistakeFlag();
+        var caseFile = document.querySelector('.case-file');
+        caseFile.classList.remove('tip-left','tip-right');
+        void caseFile.offsetWidth;
+        caseFile.classList.add(Math.random()<0.5?'tip-left':'tip-right');
+        input.value='';
+        input.focus();
+        if(c2.roundMistakes>=2){
+          showHint();
+        }
+      }
+    }
+    document.getElementById('catchBtn').addEventListener('click', submit);
+    input.addEventListener('keydown', function(e){ if(e.key==='Enter') submit(); });
+  }
+
+  function showHint(){
+    var c = state.current;
+    var step = c.problem.steps[c.stepIndex];
+    if(!c.roundHintUsed){ c.roundHintUsed = true; c.levelHints = (c.levelHints||0)+1; }
+    var area = document.getElementById('hintArea');
+    if(area){
+      area.innerHTML = '<div class="sticky-hint">'+step.ruleName+'. '+step.ruleText+'</div>';
+    }
+  }
+
+  function celebrate(){
+    var resolvedRound = state.current;
+    var token = viewToken;
+    var stamp = document.getElementById('stamp');
+    stamp.classList.remove('show');
+    void stamp.offsetWidth;
+    stamp.classList.add('show');
+    burstSparks();
+    setTimeout(function(){
+      if(token === viewToken && state.current === resolvedRound && resolvedRound.roundResolved){
+        nextRoundOrFinish();
+      }
+    }, 1150);
+  }
+
+  function burstSparks(){
+    var colors = ['var(--brass)','var(--teal)','var(--twine)'];
+    for(var i=0;i<14;i++){
+      var s = document.createElement('span');
+      s.className='spark';
+      var ang = (Math.PI*2)*(i/14) + Math.random()*0.4;
+      var dist = 90 + Math.random()*70;
+      s.style.setProperty('--ang', ang+'rad');
+      s.style.setProperty('--dist', dist+'px');
+      s.style.background = colors[i%3];
+      document.body.appendChild(s);
+      (function(el){ setTimeout(function(){ el.remove(); }, 950); })(s);
+    }
+  }
+
+  function nextRoundOrFinish(){
+    var c = state.current;
+    c.levelMistakes += c.roundMistakes;
+    if(c.roundIndex < ROUNDS_PER_LEVEL-1){
+      c.roundIndex++;
+      loadRound();
+    }else{
+      finishLevel();
+    }
+  }
+
+  function finishLevel(){
+    var c = state.current;
+    var stars = calcStars(c.levelMistakes, c.levelHints||0);
+    var prevStars = state.progress.stars[c.levelId] || 0;
+    state.progress.stars[c.levelId] = Math.max(prevStars, stars);
+    if(c.levelId === state.progress.unlocked && c.levelId < LEVELS.length){
+      state.progress.unlocked = c.levelId+1;
+    }
+    saveProgress(state.progress);
+    refreshTopbar();
+
+    if(c.levelId === LEVELS.length){
+      renderFinale();
+    }else{
+      renderLevelComplete(stars);
+    }
+  }
+
+  function renderLevelComplete(stars){
+    viewToken++;
+    var lvl = LEVELS[state.current.levelId-1];
+    mainEl.innerHTML =
+      '<section class="complete-screen">'+
+        '<h2>Справу №'+lvl.id+' розкрито!</h2>'+
+        '<div class="stars-big">'+starSvg(stars>=1)+starSvg(stars>=2)+starSvg(stars>=3)+'</div>'+
+        '<p>«'+lvl.short+'» більше не таємниця для тебе. Ікс-агенція записала цю справу в архів успіхів.</p>'+
+        '<button class="cta" id="continueBtn">Наступна справа</button>'+
+        '<button class="ghost-btn" id="mapBtn2" style="margin-top:4px;">До карти справ</button>'+
+      '</section>';
+    document.getElementById('continueBtn').addEventListener('click', function(){
+      if(state.progress.unlocked > lvl.id || lvl.id===LEVELS.length){
+        var nextId = Math.min(lvl.id+1, LEVELS.length);
+        if(nextId <= state.progress.unlocked){ openLevel(nextId); return; }
+      }
+      renderMap();
+    });
+    document.getElementById('mapBtn2').addEventListener('click', renderMap);
+  }
+
+  function renderFinale(){
+    viewToken++;
+    mainEl.innerHTML =
+      '<section class="finale-card card-index"><span class="pin"></span>'+
+        '<h2>Вітаємо, Головний детективе!</h2>'+
+        '<p class="hand">Ти розкрив(-ла) усі 8 справ Ікс-агенції.</p>'+
+        '<div class="finale-total">★ '+totalStars()+' / 24</div>'+
+        '<p>Тепер рівняння з Іксом — не таємниця: ти вмієш і зважувати обидві шальки, і застосовувати правило компонента. Продовжуй тренуватися на нових справах!</p>'+
+        '<button class="cta" id="againBtn">Переграти справи</button>'+
+      '</section>';
+    document.getElementById('againBtn').addEventListener('click', renderMap);
+  }
+
+  /* ========================= boot ========================= */
+  renderCover();
+})();
+</script>
+</body>
+</html>
