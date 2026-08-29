@@ -13,7 +13,10 @@
   const TAG_KEYS = ['group', 'id', 'label'];
   const GROUPS = ['purpose', 'topic', 'format'];
   const GROUP_LABELS = { purpose: 'Мета', topic: 'Тема', format: 'Формат' };
-  const LEGACY_PATH_GRADE_BY_ACTIVITY_ID = Object.freeze({ 'grade5-lighthouse': 5 });
+  const LEGACY_PATH_GRADE_BY_ACTIVITY_ID = Object.freeze({
+    'grade5-lighthouse': 5,
+    'grade4-lighthouse': 5
+  });
 
   function filterActivities(items, selected) {
     return items.filter((activity) => activity.subject === selected.subject

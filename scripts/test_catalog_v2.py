@@ -85,6 +85,10 @@ def main() -> None:
     lighthouse = next(record for record in manifest["activities"] if record["id"] == "grade5-lighthouse")
     assert lighthouse["grades"] == [5]
     assert lighthouse["summary"] == "Шість завдань з математики 5 класу, які крок за кроком засвічують маяк."
+    grade4_review = next(record for record in manifest["activities"] if record["id"] == "grade4-lighthouse")
+    assert grade4_review["grades"] == [5]
+    assert grade4_review["path"] == "activities/math/07-grade4-lighthouse/"
+    assert grade4_review["tags"] == ["review", "equations", "fractions", "geometry", "natural-numbers", "word-problems", "game"]
     json.dumps(valid_manifest(), ensure_ascii=False)
     print("PASS: V2 manifest positive and negative fixtures")
 

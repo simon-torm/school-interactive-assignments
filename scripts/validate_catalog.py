@@ -25,7 +25,7 @@ EXPECTED_RECORD_KEYS = {"id", "title", "subject", "grades", "path", "summary", "
 EXPECTED_TAG_KEYS = {"id", "label", "group"}
 GROUPS = ("purpose", "topic", "format")
 GROUP_RANK = {group: index for index, group in enumerate(GROUPS)}
-LEGACY_PATH_GRADE_BY_ACTIVITY_ID = {"grade5-lighthouse": 5}
+LEGACY_PATH_GRADE_BY_ACTIVITY_ID = {"grade5-lighthouse": 5, "grade4-lighthouse": 5}
 
 
 def is_allowed_public_file(path: Path) -> bool:

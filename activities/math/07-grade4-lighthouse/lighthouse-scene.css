@@ -1,0 +1,27 @@
+.lighthouse-scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 1672 / 941;
+  background: #12375f;
+}
+.scene-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.scene-image-current { z-index: 1; }
+.scene-image-next {
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .52s ease-in-out;
+}
+.scene-image-next.is-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .scene-image-next { transition: none; }
+}
