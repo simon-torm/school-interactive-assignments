@@ -14,7 +14,7 @@ Then visit `http://127.0.0.1:8000/`. The catalog requires HTTP because browsers 
 
 ## Structure
 
-- `activities.json` is the V2 catalog metadata authority: one controlled tag registry plus activity records.
+- `activities-v2.json` is the V2 catalog metadata authority: one controlled tag registry plus activity records. `activities.json` preserves the legacy V1 cache contract.
 - `activities/<subject>/<GG>-<id>/` contains standalone activities.
 - `assets/` contains only catalog styles and behavior.
 - `scripts/validate_catalog.py` validates metadata, paths, links, and public-safety rules.
