@@ -21,6 +21,7 @@ CSS_URL_RE = re.compile(r"url\(\s*(['\"]?)([^)'\"]+)\1\s*\)", re.IGNORECASE)
 TEXT_EXTENSIONS = {".html", ".css", ".js", ".json", ".md", ".py", ".txt", ""}
 IMAGE_EXTENSIONS = {".webp"}
 PUBLIC_FILES = {".nojekyll"}
+SCHOOL_URL = "https://sophiaschool.ck.ua"
 EXPECTED_RECORD_KEYS = {"id", "title", "subject", "grades", "path", "summary", "tags"}
 EXPECTED_TAG_KEYS = {"id", "label", "group"}
 GROUPS = ("purpose", "topic", "format")
@@ -233,6 +234,9 @@ class Validator:
             return
         parsed = urlsplit(target)
         if parsed.scheme or parsed.netloc or target.startswith("//") or "\\" in target:
+            if source == ROOT / "index.html" and kind == "href" and target == SCHOOL_URL:
+                self.counts["approved_external_links"] += 1
+                return
             self.error("network", source, f"{kind} uses a non-local target")
             return
         decoded_path = unquote(parsed.path)
@@ -327,7 +331,8 @@ class Validator:
         self.validate_public_safety()
         for key in (
             "manifest_files", "activity_records", "activity_directories", "html_files",
-            "css_files", "local_links", "public_files_scanned", "approved_fetch_targets"
+            "css_files", "local_links", "public_files_scanned", "approved_fetch_targets",
+            "approved_external_links"
         ):
             print(f"{key}: {self.counts[key]}")
         print(f"findings: {len(self.errors)}")

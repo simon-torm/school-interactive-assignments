@@ -29,4 +29,4 @@ Then visit `http://127.0.0.1:8000/`. The catalog requires HTTP because browsers 
 
 ## Privacy
 
-The activities add no accounts, forms, analytics, telemetry, or application data collection. Do not add personal information, identifying content, or external services. The hosting provider may keep standard infrastructure logs under its own policies.
+The activities add no accounts, forms, analytics, telemetry, or application data collection. The catalog's school-affiliation links are ordinary links and load no third-party resources; do not add personal information or other identifying content or external services. The hosting provider and linked website may keep standard infrastructure logs under their own policies when visited.

@@ -82,12 +82,42 @@ a:focus-visible,
   border-radius: 50%;
 }
 
-.header-content,
+.header-layout,
 .page-shell,
 .site-footer {
   width: min(72rem, 100%);
   margin-inline: auto;
 }
+
+.header-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 21rem);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
+}
+
+.school-badge {
+  min-height: 8.75rem;
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 1.25rem;
+  box-shadow: 0 18px 45px rgba(15, 20, 45, 0.24);
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.school-badge:hover { transform: translateY(-3px); box-shadow: 0 22px 52px rgba(15, 20, 45, 0.3); }
+.school-badge img { width: 7rem; height: 7rem; display: block; object-fit: contain; }
+.school-badge-copy { display: grid; gap: 0.55rem; }
+.school-name { font-weight: 850; font-size: 1rem; line-height: 1.25; }
+.school-link-cue { color: #55408d; font-size: 0.86rem; font-weight: 800; }
 
 .eyebrow,
 .step-label {
@@ -231,11 +261,18 @@ h1 { max-width: 13ch; margin: 0; font-size: clamp(2.6rem, 7vw, 5.4rem); line-hei
 .empty-state p:last-child { margin: 0; color: var(--muted); }
 
 .site-footer { padding: 0 1.25rem 2.5rem; color: var(--muted); font-size: 0.9rem; }
-.site-footer p { padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.site-footer p { margin: 0; }
+.site-footer p:first-child { padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.school-attribution { padding-top: 0.35rem; }
+.school-attribution a { color: inherit; text-underline-offset: 0.16em; }
+.school-attribution a:hover { color: var(--ink); }
 
 body.subject-computer-science { --accent: var(--cs); --accent-soft: var(--cs-soft); }
 
 @media (max-width: 760px) {
+  .header-layout { grid-template-columns: 1fr; gap: 2rem; }
+  .school-badge { width: min(100%, 25rem); grid-template-columns: 6.25rem minmax(0, 1fr); }
+  .school-badge img { width: 6.25rem; height: 6.25rem; }
   .subject-grid,
   .activity-grid { grid-template-columns: 1fr; }
   .catalog-layout { grid-template-columns: 1fr; }
@@ -247,6 +284,8 @@ body.subject-computer-science { --accent: var(--cs); --accent-soft: var(--cs-sof
 
 @media (max-width: 460px) {
   .site-header { padding-top: 3.25rem; }
+  .school-badge { min-height: 0; grid-template-columns: 5.5rem minmax(0, 1fr); padding: 0.7rem; }
+  .school-badge img { width: 5.5rem; height: 5.5rem; }
   .subject-card { grid-template-columns: auto 1fr; min-height: 10rem; }
   .subject-arrow { display: none; }
   .subject-symbol { width: 3.5rem; height: 3.5rem; }
