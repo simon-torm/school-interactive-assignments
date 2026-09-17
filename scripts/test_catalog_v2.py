@@ -89,6 +89,11 @@ def main() -> None:
     assert grade4_review["grades"] == [5]
     assert grade4_review["path"] == "activities/math/07-grade4-lighthouse/"
     assert grade4_review["tags"] == ["review", "equations", "fractions", "geometry", "natural-numbers", "word-problems", "game"]
+    inspector = next(record for record in manifest["activities"] if record["id"] == "percentage-inspector")
+    assert inspector["title"] == "Інспектор відсотків"
+    assert inspector["grades"] == [6]
+    assert inspector["path"] == "activities/math/06-percentage-inspector/"
+    assert inspector["tags"] == ["percentages", "game"]
     json.dumps(valid_manifest(), ensure_ascii=False)
     print("PASS: V2 manifest positive and negative fixtures")
 

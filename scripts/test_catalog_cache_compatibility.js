@@ -26,5 +26,6 @@ assert.equal(currentManifest.schemaVersion, 2, 'the current catalog manifest mus
 assert.match(catalog, /fetch\('\.\/activities-v2\.json'/, 'the current catalog script must read only the V2 manifest');
 const currentIds = new Set(currentManifest.activities.map((record) => record.id));
 assert.ok(legacyManifest.activities.every((record) => currentIds.has(record.id)), 'every legacy activity must remain available to current clients');
+assert.ok(legacyManifest.activities.some((record) => record.id === 'percentage-inspector'), 'Percentage Inspector remains visible to cached V1 catalog clients');
 
 console.log('PASS: legacy V1 and current V2 manifests keep cached catalog clients compatible');

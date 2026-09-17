@@ -99,7 +99,7 @@ def main() -> None:
     chooser = rendered_dom()
     assert hidden(chooser, "error-view"), "production manifest must not show catalog error"
     assert not hidden(chooser, "chooser-view"), "production manifest must render subject chooser"
-    assert re.search(r'data-count-for="math">5 завдань<', chooser), "real Math activity count must render"
+    assert re.search(r'data-count-for="math">6 завдань<', chooser), "real Math activity count must render"
 
     catalog = rendered_dom("?subject=math&grades=5")
     assert not hidden(catalog, "catalog-view"), "Math catalog must render through URL state"
@@ -109,6 +109,8 @@ def main() -> None:
     assert 'href="activities/math/06-grade5-lighthouse/"' in catalog
     assert 'href="activities/math/06-fraction-kingdom/"' in catalog
     assert 'href="activities/math/07-grade4-lighthouse/"' in catalog
+    grade6 = rendered_dom("?subject=math&grades=6")
+    assert 'href="activities/math/06-percentage-inspector/"' in grade6
     print(f"PASS: {len(activities)} canonical activities expose one catalog return link and render through the real browser runtime")
 
 

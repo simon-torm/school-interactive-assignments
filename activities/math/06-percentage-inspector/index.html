@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F4F2ED" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15171A" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Інтерактивна гра з математики для 6 класу: відсотки, знижки та етикетки. Учень рахує в голові й вводить відповідь. Працює офлайн, без жодних підключень.">
+<meta name="author" content="">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%92%AF%3C%2Ftext%3E%3C%2Fsvg%3E">
+<title>Інспектор відсотків</title>
+<style>
+  :root{
+    --ground:#F4F2ED;
+    --surface:#FFFFFF;
+    --surface-2:#F6F4EF;
+    --ink:#16181C;
+    --ink-soft:#6B7076;
+    --line:#E3E0D8;
+    --line-2:#C8C4B8;
+    --red:#CE3529;
+    --red-soft:#FBE4E1;
+    --yellow:#F4C542;
+    --yellow-soft:#FCF0CF;
+    --green:#1D8F5B;
+    --green-soft:#DDF0E5;
+    --blue:#2C5FA8;
+    --blue-soft:#DFE8F7;
+    --sh1:0 1px 2px rgba(22,24,28,.07);
+    --sh2:0 2px 5px rgba(22,24,28,.07), 0 12px 26px rgba(22,24,28,.08);
+    --font:ui-rounded,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#15171A;
+      --surface:#1E2227;
+      --surface-2:#262B31;
+      --ink:#ECEEF0;
+      --ink-soft:#98A0A8;
+      --line:#2F353C;
+      --line-2:#4C545D;
+      --red:#F0685C;
+      --red-soft:#3A1E1B;
+      --yellow:#F4C542;
+      --yellow-soft:#3A2F14;
+      --green:#4CC287;
+      --green-soft:#153021;
+      --blue:#7BA7E8;
+      --blue-soft:#1B2739;
+      --sh1:0 1px 2px rgba(0,0,0,.4);
+      --sh2:0 2px 6px rgba(0,0,0,.35), 0 12px 28px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#15171A;
+    --surface:#1E2227;
+    --surface-2:#262B31;
+    --ink:#ECEEF0;
+    --ink-soft:#98A0A8;
+    --line:#2F353C;
+    --line-2:#4C545D;
+    --red:#F0685C;
+    --red-soft:#3A1E1B;
+    --yellow:#F4C542;
+    --yellow-soft:#3A2F14;
+    --green:#4CC287;
+    --green-soft:#153021;
+    --blue:#7BA7E8;
+    --blue-soft:#1B2739;
+    --sh1:0 1px 2px rgba(0,0,0,.4);
+    --sh2:0 2px 6px rgba(0,0,0,.35), 0 12px 28px rgba(0,0,0,.45);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font); -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;}
+  h1,h2,h3,p{margin:0;}
+  .num{font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+  .label{font-size:.68rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft);}
+  .catalog-link{
+    position:fixed; z-index:10; top:max(10px,env(safe-area-inset-top,0px)); left:max(10px,env(safe-area-inset-left,0px));
+    min-height:44px; display:inline-flex; align-items:center; gap:5px; padding:0 12px;
+    border-radius:12px; background:var(--surface); box-shadow:var(--sh1); color:var(--ink);
+    font-size:.82rem; font-weight:800; text-decoration:none;
+  }
+  .catalog-link:focus-visible{outline:3px solid var(--blue); outline-offset:2px;}
+  .fraction{
+    display:inline-grid; grid-template-rows:auto 1px auto; align-items:center; justify-items:center;
+    min-width:1.2em; margin-inline:.08em; vertical-align:-.45em; line-height:1; font-variant-numeric:tabular-nums;
+  }
+  .fraction .fraction-bar{width:100%; min-width:1.05em; height:1px; background:currentColor;}
+  .fraction .fraction-num,.fraction .fraction-den{font-size:.78em; padding-inline:.1em;}
+
+  #app{
+    height:100%; max-width:560px; margin:0 auto;
+    padding-inline:15px; padding-block:12px;
+    display:flex; flex-direction:column; gap:12px; overflow-x:hidden;
+  }
+  .screen{flex:1; min-height:0; display:flex; flex-direction:column; gap:12px;}
+
+  /* ===== MENU ===== */
+  .menu{justify-content:center; text-align:center; gap:16px;}
+  .menu-badge{
+    align-self:center; background:var(--red); color:#fff; font-weight:900;
+    font-size:.72rem; letter-spacing:.14em; padding:5px 12px; border-radius:999px;
+  }
+  .menu-title{font-size:clamp(1.7rem,7.5vw,2.3rem); font-weight:900; letter-spacing:-.03em; line-height:1.05;}
+  .menu-sub{color:var(--ink-soft); font-size:.95rem; font-weight:600; line-height:1.5; max-width:34ch; margin-inline:auto;}
+  .rules{
+    background:var(--surface); border-radius:16px; box-shadow:var(--sh1);
+    padding:14px 16px; text-align:left; display:flex; flex-direction:column; gap:9px;
+  }
+  .rule{display:grid; grid-template-columns:22px 1fr; gap:10px; align-items:start; font-size:.87rem; font-weight:600; color:var(--ink-soft); line-height:1.4;}
+  .rule b{color:var(--ink);}
+  .rule-n{
+    width:22px; height:22px; border-radius:7px; background:var(--surface-2);
+    display:grid; place-items:center; font-size:.74rem; font-weight:900; color:var(--ink);
+  }
+  .menu-actions{display:flex; flex-direction:column; gap:9px;}
+  .best{font-size:.8rem; font-weight:800; color:var(--ink-soft);}
+  .seg{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:5px;
+    background:var(--surface); padding:5px; border-radius:15px; box-shadow:var(--sh1);
+  }
+  .seg-btn{
+    border:none; background:transparent; padding:11px 3px; border-radius:11px;
+    font-size:.85rem; font-weight:800; color:var(--ink-soft); cursor:pointer;
+  }
+  .seg-btn.on{background:var(--ink); color:var(--ground);}
+  .seg-btn:focus-visible{outline:3px solid var(--blue); outline-offset:1px;}
+  .seg-lab{font-size:.68rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); text-align:center;}
+
+  /* ===== BUTTONS ===== */
+  .btn{border:none; border-radius:14px; padding:14px 16px; font-size:.97rem; font-weight:800; cursor:pointer; transition:transform .12s ease;}
+  .btn:active{transform:scale(.975);}
+  .btn:focus-visible{outline:3px solid var(--blue); outline-offset:2px;}
+  .btn-primary{background:var(--ink); color:var(--ground);}
+  .btn-red{background:var(--red); color:#fff;}
+  .btn-green{background:var(--green); color:#fff;}
+  .btn-ghost{background:var(--surface); color:var(--ink); box-shadow:var(--sh1);}
+  .btn:disabled{opacity:.45; cursor:default;}
+
+  /* ===== PLAY HEADER ===== */
+  .topbar{display:flex; align-items:center; gap:10px;}
+  .icon-btn{
+    width:34px; height:34px; flex:none; border:none; border-radius:10px; background:var(--surface);
+    box-shadow:var(--sh1); color:var(--ink); font-size:1.05rem; font-weight:800; cursor:pointer;
+    display:grid; place-items:center;
+  }
+  .icon-btn:focus-visible{outline:3px solid var(--blue); outline-offset:2px;}
+  .topbar-mid{flex:1; min-width:0;}
+  .case-no{font-size:.85rem; font-weight:800;}
+  .tierbar{display:flex; align-items:center; gap:5px; margin-top:3px;}
+  .tier-dots{display:flex; gap:3px;}
+  .tdot{width:7px; height:7px; border-radius:50%; background:var(--line-2);}
+  .tdot.on{background:var(--red);}
+  .tier-text{font-size:.7rem; font-weight:800; color:var(--ink-soft);}
+  .points{text-align:right; flex:none;}
+  .points-val{font-size:1.15rem; font-weight:900; font-variant-numeric:tabular-nums;}
+  .points-lab{font-size:.63rem; font-weight:800; color:var(--ink-soft); letter-spacing:.06em; text-transform:uppercase;}
+  .streak{
+    display:inline-flex; align-items:center; gap:4px; background:var(--yellow-soft);
+    color:#8A6400; font-size:.68rem; font-weight:900; padding:2px 8px; border-radius:999px; margin-top:3px;
+  }
+  :root:not([data-theme="light"]) .streak{color:var(--yellow);}
+  @media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) .streak{color:#8A6400;} }
+
+  /* ===== THE SIGN ===== */
+  .sign{
+    background:var(--surface); border-radius:18px; box-shadow:var(--sh2);
+    padding:16px; position:relative; overflow:hidden;
+  }
+  .sign-top{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .sign-icon{font-size:1.15rem;}
+  .sign-shop{font-size:.75rem; font-weight:800; color:var(--ink-soft); letter-spacing:.04em;}
+  .sign-item{font-size:1.02rem; font-weight:800; margin-bottom:8px;}
+  .price-row{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+  .price-old{font-size:1.15rem; font-weight:800; color:var(--ink-soft); text-decoration:line-through; text-decoration-thickness:2px;}
+  .price-new{font-size:1.9rem; font-weight:900; letter-spacing:-.03em;}
+  .price-main{font-size:2.1rem; font-weight:900; letter-spacing:-.03em;}
+  .badge{
+    background:var(--red); color:#fff; font-weight:900; font-size:1rem;
+    padding:6px 12px; border-radius:11px; display:inline-block;
+  }
+  .badge-claim{
+    background:var(--yellow); color:#4A3600; font-weight:900; font-size:.95rem;
+    padding:6px 12px; border-radius:11px; display:inline-flex; align-items:center; gap:6px;
+  }
+  .claim-note{font-size:.76rem; font-weight:700; color:var(--ink-soft); margin-top:9px;}
+  .two-offers{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .offer{
+    background:var(--surface-2); border-radius:13px; padding:11px 12px; text-align:center;
+    display:flex; flex-direction:column; gap:5px;
+  }
+  .offer-name{font-size:.72rem; font-weight:900; letter-spacing:.06em; color:var(--ink-soft);}
+  .offer-price{font-size:1.25rem; font-weight:900;}
+  .offer-disc{font-size:.85rem; font-weight:900; color:var(--red);}
+  .label-lines{display:flex; flex-direction:column; gap:5px; font-size:.92rem; font-weight:700;}
+  .label-lines .big{font-size:1.5rem; font-weight:900;}
+
+  /* ===== PROMPT + INPUT ===== */
+  .prompt{font-size:1.02rem; font-weight:800; line-height:1.35; text-align:center; padding-inline:4px;}
+  .prompt small{display:block; font-size:.78rem; font-weight:700; color:var(--ink-soft); margin-top:4px;}
+
+  .answer-area{flex:1; min-height:0; display:flex; flex-direction:column; justify-content:flex-end; gap:10px; padding-bottom:2px;}
+  .display{
+    background:var(--surface); border:2px solid var(--line); border-radius:16px;
+    padding:12px 16px; min-height:62px; display:flex; align-items:center; justify-content:center; gap:3px;
+    font-size:2rem; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.02em;
+  }
+  .display.empty{color:var(--line-2);}
+  .display.shake{animation:shake .32s ease;}
+  .display-unit{font-size:1.15rem; font-weight:800; color:var(--ink-soft); margin-left:3px;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
+
+  .judge{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .judge .btn{padding:20px 10px; font-size:1.02rem;}
+
+  .hint-zone{display:flex; flex-direction:column; gap:7px;}
+  .hint-btn{
+    align-self:center; background:var(--blue-soft); color:var(--blue); border:none;
+    border-radius:999px; padding:8px 16px; font-size:.82rem; font-weight:800; cursor:pointer;
+  }
+  .hint-btn:focus-visible{outline:3px solid var(--blue); outline-offset:2px;}
+  .hint-step{
+    background:var(--blue-soft); border-radius:12px; padding:10px 13px;
+    font-size:.88rem; font-weight:700; line-height:1.45; color:var(--ink);
+    display:grid; grid-template-columns:20px 1fr; gap:9px; align-items:start;
+  }
+  .hint-step .n{
+    width:20px; height:20px; border-radius:6px; background:var(--blue); color:#fff;
+    font-size:.7rem; font-weight:900; display:grid; place-items:center;
+  }
+  .hint-step b{font-weight:900;}
+
+  /* ===== KEYPAD ===== */
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .key{
+    background:var(--surface); border:none; border-radius:14px; box-shadow:var(--sh1);
+    padding:15px 0; font-size:1.3rem; font-weight:800; color:var(--ink); cursor:pointer;
+    transition:transform .1s ease, background .1s ease; font-variant-numeric:tabular-nums;
+  }
+  .key:active{transform:scale(.95); background:var(--surface-2);}
+  .key:focus-visible{outline:3px solid var(--blue); outline-offset:2px;}
+  .key.wide{grid-column:span 2;}
+  .key-ok{background:var(--green); color:#fff; box-shadow:none;}
+  .key-del{background:var(--surface-2);}
+
+  /* ===== FEEDBACK ===== */
+  .fb{
+    background:var(--surface); border-radius:18px; box-shadow:var(--sh2);
+    padding:15px 16px; display:flex; flex-direction:column; gap:11px;
+  }
+  .fb-head{display:flex; align-items:center; gap:9px;}
+  .fb-mark{
+    width:30px; height:30px; border-radius:50%; display:grid; place-items:center;
+    font-size:.95rem; font-weight:900; color:#fff; flex:none;
+  }
+  .fb-mark.ok{background:var(--green);}
+  .fb-mark.no{background:var(--red);}
+  .fb-title{font-size:1.02rem; font-weight:900;}
+  .fb-pts{margin-left:auto; font-size:.8rem; font-weight:900; color:var(--ink-soft);}
+  .fb-body{font-size:.9rem; font-weight:700; line-height:1.5;}
+  .fb-body b{font-weight:900;}
+  .fb-check{
+    background:var(--surface-2); border-radius:12px; padding:11px 13px;
+    font-size:.88rem; font-weight:700; line-height:1.5;
+  }
+  .fb-check .hl{color:var(--red); font-weight:900;}
+  .fb-check .ok{color:var(--green); font-weight:900;}
+
+  /* mini tape */
+  .mini-tape{display:flex; flex-direction:column; gap:5px; margin-top:2px;}
+  .mt-bar{position:relative; height:26px; background:var(--surface-2); border-radius:8px; overflow:hidden;}
+  .mt-fill{position:absolute; left:0; top:0; bottom:0; background:var(--green-soft);}
+  .mt-mark{position:absolute; top:0; bottom:0; width:3px; border-radius:2px;}
+  .mt-mark.you{background:var(--red);}
+  .mt-mark.right{background:var(--green);}
+  .mt-legend{display:flex; gap:12px; font-size:.7rem; font-weight:800;}
+  .mt-legend .you{color:var(--red);}
+  .mt-legend .right{color:var(--green);}
+
+  /* ===== REPORT ===== */
+  .report{justify-content:center; text-align:center; gap:14px;}
+  .rep-score{font-size:3rem; font-weight:900; letter-spacing:-.03em; font-variant-numeric:tabular-nums; line-height:1;}
+  .rep-score small{font-size:1rem; color:var(--ink-soft); font-weight:800; margin-left:6px;}
+  .rep-grid{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
+  .rep-cell{background:var(--surface); border-radius:14px; box-shadow:var(--sh1); padding:11px; }
+  .rep-val{font-size:1.3rem; font-weight:900; font-variant-numeric:tabular-nums;}
+  .rep-lab{font-size:.7rem; font-weight:800; color:var(--ink-soft); margin-top:2px;}
+  .rep-msg{font-size:.9rem; font-weight:700; color:var(--ink-soft); line-height:1.5; max-width:34ch; margin-inline:auto;}
+
+  /* ===== CHEAT SHEET ===== */
+  .sheet-backdrop{position:fixed; inset:0; background:rgba(10,12,14,.55); z-index:20; display:flex; align-items:flex-end; justify-content:center; padding:14px;}
+  .sheet{
+    background:var(--surface); border-radius:20px; box-shadow:var(--sh2); width:100%; max-width:520px;
+    padding:18px 16px calc(16px + env(safe-area-inset-bottom,0px)); max-height:86vh; overflow-y:auto;
+    display:flex; flex-direction:column; gap:11px;
+  }
+  .sheet h2{font-size:1.1rem; font-weight:900;}
+  .cheat-row{
+    display:grid; grid-template-columns:62px 1fr; gap:12px; align-items:center;
+    background:var(--surface-2); border-radius:12px; padding:10px 12px;
+  }
+  .cheat-k{font-size:1.05rem; font-weight:900; color:var(--red); text-align:center;}
+  .cheat-v{font-size:.85rem; font-weight:700; line-height:1.4;}
+  .cheat-v b{font-weight:900;}
+  .cheat-note{font-size:.82rem; font-weight:700; color:var(--ink-soft); line-height:1.5;}
+
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+  [hidden]{display:none !important;}
+
+  /* автономний файл: відступи під "чубчик" телефона (в артефакті їх додає платформа) */
+  :root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);}
+  img{max-width:100%;}
+</style>
+</head>
+<body>
+<div id="app">
+  <a class="catalog-link" id="catalog-link" href="../../../"><span aria-hidden="true">←</span> До каталогу</a>
+
+  <!-- ===== MENU ===== -->
+  <section class="screen menu" id="screen-menu">
+    <span class="menu-badge">ЗМІНА ПОЧИНАЄТЬСЯ</span>
+    <h1 class="menu-title">Інспектор відсотків</h1>
+    <p class="menu-sub">Крамниці обіцяють знижки, етикетки — склад. Твоя робота — перевірити, чи не брешуть. Рахувати доведеться в голові.</p>
+
+    <div class="rules">
+      <div class="rule"><span class="rule-n">1</span><span>Спершу <b>порахуй сам</b> і введи відповідь — варіантів немає, вгадати не вийде.</span></div>
+      <div class="rule"><span class="rule-n">2</span><span>Застряг — бери <b>підказку</b>: вона показує один крок. Але бали за неї знімаються.</span></div>
+      <div class="rule"><span class="rule-n">3</span><span>Йде добре — справи <b>стають складнішими</b>. Помиляєшся — легшими.</span></div>
+    </div>
+
+    <div class="menu-actions">
+      <p class="seg-lab">Довжина зміни</p>
+      <div class="seg" id="len-seg">
+        <button class="seg-btn on" data-len="10">10 справ</button>
+        <button class="seg-btn" data-len="25">25 справ</button>
+        <button class="seg-btn" data-len="0">без кінця</button>
+      </div>
+      <button class="btn btn-red" id="btn-start">Почати зміну</button>
+      <button class="btn btn-ghost" id="btn-cheat">Шпаргалка інспектора</button>
+    </div>
+    <p class="best" id="best-line"></p>
+  </section>
+
+  <!-- ===== PLAY ===== -->
+  <section class="screen play" id="screen-play" hidden>
+    <div class="topbar">
+      <button class="icon-btn" id="btn-quit" aria-label="Завершити зміну">‹</button>
+      <div class="topbar-mid">
+        <div class="case-no" id="case-no">Справа 1 з 10</div>
+        <div class="tierbar">
+          <span class="tier-dots" id="tier-dots"></span>
+          <span class="tier-text" id="tier-text">новачок</span>
+        </div>
+      </div>
+      <div class="points">
+        <div class="points-val num" id="points-val">0</div>
+        <div class="points-lab">балів</div>
+        <div class="streak" id="streak" hidden>серія <span id="streak-n">2</span></div>
+      </div>
+    </div>
+
+    <div class="sign" id="sign"></div>
+    <p class="prompt" id="prompt"></p>
+
+    <div class="answer-area" id="answer-area">
+      <div class="hint-zone" id="hint-zone"></div>
+      <div id="input-zone"></div>
+    </div>
+
+    <div id="pad-zone"></div>
+  </section>
+
+  <!-- ===== REPORT ===== -->
+  <section class="screen report" id="screen-report" hidden>
+    <div>
+      <div class="rep-score num" id="rep-score">0<small> балів</small></div>
+      <div class="best" id="rep-best"></div>
+    </div>
+    <div class="rep-grid">
+      <div class="rep-cell"><div class="rep-val num" id="rep-cases">0</div><div class="rep-lab">справ пройдено</div></div>
+      <div class="rep-cell"><div class="rep-val num" id="rep-solo">0</div><div class="rep-lab">без підказок</div></div>
+      <div class="rep-cell"><div class="rep-val num" id="rep-lies">0</div><div class="rep-lab">брехень викрито</div></div>
+      <div class="rep-cell"><div class="rep-val num" id="rep-streak">0</div><div class="rep-lab">найдовша серія</div></div>
+    </div>
+    <p class="rep-msg" id="rep-msg"></p>
+    <div class="menu-actions">
+      <button class="btn btn-red" id="rep-again">Нова зміна</button>
+      <button class="btn btn-ghost" id="rep-cheat">Шпаргалка інспектора</button>
+      <button class="btn btn-ghost" id="rep-menu">На головну</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="sheet-backdrop" id="cheat" hidden>
+  <div class="sheet">
+    <h2>Шпаргалка інспектора</h2>
+    <div class="cheat-row"><span class="cheat-k">10%</span><span class="cheat-v">Поділи на 10. <b>10% від 480 = 48</b></span></div>
+    <div class="cheat-row"><span class="cheat-k">1%</span><span class="cheat-v">Поділи на 100. <b>1% від 480 = 4,8</b></span></div>
+    <div class="cheat-row"><span class="cheat-k">50%</span><span class="cheat-v">Половина. <b>50% від 480 = 240</b></span></div>
+    <div class="cheat-row"><span class="cheat-k">25%</span><span class="cheat-v">Чверть, тобто поділи на 4. <b>25% від 480 = 120</b></span></div>
+    <div class="cheat-row"><span class="cheat-k">5%</span><span class="cheat-v">Половина від 10%. <b>5% від 480 = 24</b></span></div>
+    <p class="cheat-note">Будь-який відсоток збирається з цих: <b>35% = 10+10+10+5</b>, або коротше — <b>25% + 10%</b>.</p>
+    <p class="cheat-note">Назад, до цілого: якщо <b>20% — це 30</b>, то 10% — це 15, а все ціле — 150.</p>
+    <p class="cheat-note">Дріб у відсотки: доведи знаменник до 100. <b><span class="fraction" role="math" aria-label="2 поділити на 5"><span class="fraction-num" aria-hidden="true">2</span><span class="fraction-bar" aria-hidden="true"></span><span class="fraction-den" aria-hidden="true">5</span></span> = <span class="fraction" role="math" aria-label="40 поділити на 100"><span class="fraction-num" aria-hidden="true">40</span><span class="fraction-bar" aria-hidden="true"></span><span class="fraction-den" aria-hidden="true">100</span></span> = 40%</b>. Десятковий: <b>0,35 = 35 сотих = 35%</b>.</p>
+    <button class="btn btn-primary" id="cheat-close">Зрозуміло</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  function $(id){ return document.getElementById(id); }
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function pick(a){ return a[randInt(0,a.length-1)]; }
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){var j=randInt(0,i),t=a[i];a[i]=a[j];a[j]=t;} return a; }
+  function n(x){
+    var s = (Math.round(x*100)/100).toString().replace('.', ',');
+    var parts = s.split(',');
+    if (parts[0].length > 3) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return parts.join(',');
+  }
+  function fraction(nn, dd){
+    return '<span class="fraction" role="math" aria-label="' + nn + ' поділити на ' + dd + '">' +
+      '<span class="fraction-num" aria-hidden="true">' + nn + '</span>' +
+      '<span class="fraction-bar" aria-hidden="true"></span>' +
+      '<span class="fraction-den" aria-hidden="true">' + dd + '</span></span>';
+  }
+  function store(k,v){
+    try{
+      if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null');
+      localStorage.setItem(k, JSON.stringify(v));
+    }catch(e){ return null; }
+  }
+
+  /* ================= content pools ================= */
+  var ITEMS = [
+    {icon:'🧥', shop:'ОДЯГ', name:'Зимова куртка'},
+    {icon:'👟', shop:'СПОРТ', name:'Кросівки'},
+    {icon:'🎧', shop:'ТЕХНІКА', name:'Навушники'},
+    {icon:'🛴', shop:'РУХ', name:'Самокат'},
+    {icon:'🎒', shop:'ШКОЛА', name:'Рюкзак'},
+    {icon:'⌚', shop:'ТЕХНІКА', name:'Смарт-годинник'},
+    {icon:'🚲', shop:'РУХ', name:'Велосипед'},
+    {icon:'🧩', shop:'ІГРИ', name:'Конструктор'},
+    {icon:'🎸', shop:'МУЗИКА', name:'Гітара'},
+    {icon:'📱', shop:'ТЕХНІКА', name:'Чохол на телефон'}
+  ];
+
+  var LABELS = [
+    {icon:'🧃', name:'Сік мультифрукт', unit:'мл', word:'соку', kind:'об’єм'},
+    {icon:'🍫', name:'Шоколад', unit:'г', word:'какао', kind:'вага'},
+    {icon:'🥣', name:'Пластівці', unit:'г', word:'цукру', kind:'вага'},
+    {icon:'🧴', name:'Шампунь', unit:'мл', word:'екстракту', kind:'об’єм'},
+    {icon:'🥤', name:'Лимонад', unit:'мл', word:'соку', kind:'об’єм'}
+  ];
+
+  var DEPOSITS = [
+    {icon:'🎟️', text:'Завдаток за квиток', full:'повна ціна квитка'},
+    {icon:'🚲', text:'Передоплата за велосипед', full:'повна ціна велосипеда'},
+    {icon:'🎸', text:'Перший внесок за гітару', full:'повна ціна гітари'},
+    {icon:'🏕️', text:'Завдаток за похід', full:'повна вартість походу'}
+  ];
+
+  var FRACS = [
+    {nn:1, dd:2, pct:50}, {nn:1, dd:4, pct:25}, {nn:3, dd:4, pct:75},
+    {nn:1, dd:5, pct:20}, {nn:2, dd:5, pct:40}, {nn:3, dd:5, pct:60}, {nn:4, dd:5, pct:80},
+    {nn:1, dd:10, pct:10}, {nn:3, dd:10, pct:30}, {nn:7, dd:10, pct:70}, {nn:9, dd:10, pct:90},
+    {nn:1, dd:20, pct:5}, {nn:3, dd:20, pct:15}, {nn:13, dd:20, pct:65}, {nn:17, dd:20, pct:85},
+    {nn:1, dd:25, pct:4}, {nn:3, dd:25, pct:12}, {nn:1, dd:50, pct:2}
+  ];
+  var DECS = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,4,8,12,6];
+
+  var WHOLES = {
+    1:[200,400,600,800,1000,120,160,240,300],
+    2:[240,320,480,560,600,720,800,900,1200],
+    3:[140,260,340,460,740,880,960,1240,1360],
+    4:[260,540,760,1120,1480,1640,1820,2240]
+  };
+  var PCTS = {
+    1:[10,25,50],
+    2:[5,15,20,30,40,75],
+    3:[35,45,60,65,85,90],
+    4:[15,35,55,65,95,45]
+  };
+
+  /* ================= hint ladders ================= */
+  function ladderPart(W, p){
+    var steps = [], ten = W/10, five = W/20;
+    if (p === 50) { steps.push('50% — це половина: ' + n(W) + ' : 2 = <b>' + n(W/2) + '</b>'); return steps; }
+    if (p === 25) { steps.push('25% — це чверть: ' + n(W) + ' : 4 = <b>' + n(W/4) + '</b>'); return steps; }
+    if (p === 75) {
+      steps.push('25% — це чверть: ' + n(W) + ' : 4 = <b>' + n(W/4) + '</b>');
+      steps.push('75% — це три чверті: 3 × ' + n(W/4) + ' = <b>' + n(3*W/4) + '</b>');
+      return steps;
+    }
+    steps.push('10% — це ' + n(W) + ' : 10 = <b>' + n(ten) + '</b>');
+    if (p === 10) return steps;
+    var tens = Math.floor(p/10), rem = p % 10;
+    var times = (tens >= 2 && tens <= 4) ? 'рази' : 'разів';
+    if (rem === 0){
+      steps.push(p + '% — це ' + tens + ' ' + times + ' по 10%: ' + tens + ' × ' + n(ten) + ' = <b>' + n(tens*ten) + '</b>');
+    } else {
+      steps.push('5% — це половина від 10%: ' + n(ten) + ' : 2 = <b>' + n(five) + '</b>');
+      if (tens === 1){
+        steps.push(p + '% = 10% + 5% = ' + n(ten) + ' + ' + n(five) + ' = <b>' + n(W*p/100) + '</b>');
+      } else if (tens > 1){
+        steps.push(p + '% = ' + tens + ' × ' + n(ten) + ' + ' + n(five) + ' = <b>' + n(W*p/100) + '</b>');
+      }
+    }
+    if (p >= 80 && p < 100){
+      steps.push('Хитріше — з іншого боку: 100% − ' + (100-p) + '% = ' + n(W) + ' − ' +
+                 n(W*(100-p)/100) + ' = <b>' + n(W*p/100) + '</b>');
+    }
+    return steps;
+  }
+
+  function ladderWhole(part, p, whole){
+    var steps = [];
+    if (p === 50){
+      steps.push('50% — це половина цілого, тому ціле вдвічі більше');
+      steps.push('2 × ' + n(part) + ' = <b>' + n(whole) + '</b>');
+    } else if (p === 25){
+      steps.push('25% — це чверть цілого, а чвертей у цілому чотири');
+      steps.push('4 × ' + n(part) + ' = <b>' + n(whole) + '</b>');
+    } else if (p === 75){
+      steps.push('75% — це три чверті, тож одна чверть: ' + n(part) + ' : 3 = <b>' + n(whole/4) + '</b>');
+      steps.push('У цілому чотири чверті: 4 × ' + n(whole/4) + ' = <b>' + n(whole) + '</b>');
+    } else if (p === 10){
+      steps.push('10% — це десята частина цілого');
+      steps.push('10 × ' + n(part) + ' = <b>' + n(whole) + '</b>');
+    } else {
+      steps.push(p + '% — це ' + n(part) + ', тож 10% буде в ' + (p/10) + ' рази менше: ' +
+                 n(part) + ' : ' + (p/10) + ' = <b>' + n(whole/10) + '</b>');
+      steps.push('Ціле — це 10 разів по 10%: 10 × ' + n(whole/10) + ' = <b>' + n(whole) + '</b>');
+    }
+    return steps;
+  }
+
+  function ladderWhatPct(part, whole, pct){
+    return [
+      '1% від ' + n(whole) + ' — це ' + n(whole) + ' : 100 = <b>' + n(whole/100) + '</b>',
+      'Скільки таких одиничок у ' + n(part) + '? ' + n(part) + ' : ' + n(whole/100) + ' = <b>' + pct + '</b>',
+      'Отже це <b>' + pct + '%</b>'
+    ];
+  }
+
+  function ladderFrac(f){
+    var k = 100 / f.dd;
+    return [
+      'Щоб отримати відсотки, знаменник треба зробити 100: ' + f.dd + ' × ' + n(k) + ' = 100',
+      'Тоді чисельник теж множимо на ' + n(k) + ': ' + f.nn + ' × ' + n(k) + ' = <b>' + n(f.nn*k) + '</b>',
+      f.nn*k + ' сотих — це <b>' + f.pct + '%</b>'
+    ];
+  }
+
+  /* ================= case generators ================= */
+  function caseDiscount(tier){
+    var W = pick(WHOLES[tier]), p = pick(PCTS[tier]), item = pick(ITEMS);
+    var cut = W*p/100;
+    var askPay = tier >= 2 && Math.random() < 0.5;
+    var ans = askPay ? W - cut : cut;
+    var ladder = ladderPart(W, p).slice();
+    if (askPay) ladder.push('Заплатиш решту: ' + n(W) + ' − ' + n(cut) + ' = <b>' + n(W-cut) + '</b>');
+    return {
+      kind:'discount',
+      facts:{whole:W, percent:p, cut:cut, askPay:askPay},
+      sign:'<div class="sign-top"><span class="sign-icon">' + item.icon + '</span>' +
+           '<span class="sign-shop">' + item.shop + ' · РОЗПРОДАЖ</span></div>' +
+           '<div class="sign-item">' + item.name + '</div>' +
+           '<div class="price-row"><span class="price-main num">' + n(W) + ' ₴</span>' +
+           '<span class="badge">−' + p + '%</span></div>',
+      prompt: askPay ? 'Скільки заплатиш після знижки?' : 'Скільки гривень знижки?',
+      unit:'₴', answer:ans, ladder:ladder,
+      solution: askPay
+        ? p + '% від ' + n(W) + ' = ' + n(cut) + ', тож заплатиш ' + n(W) + ' − ' + n(cut) + ' = <b>' + n(ans) + ' ₴</b>'
+        : p + '% від ' + n(W) + ' = <b>' + n(ans) + ' ₴</b>',
+      checkBack: function(user){
+        var up = Math.round(user / W * 1000) / 10;
+        if (askPay) return 'Твоє число — це ' + n(up) + '% від ціни, а після знижки лишається ' + (100-p) + '%.';
+        return 'Твоє число — це <span class="hl">' + n(up) + '%</span> від ' + n(W) + ', а треба було <span class="ok">' + p + '%</span>.';
+      },
+      tape: askPay ? null : {whole:W, rightPct:p, unit:'₴'}
+    };
+  }
+
+  function caseClaim(tier){
+    var base = [400,600,800,1000,1200,1500,2000];
+    var W = pick(base);
+    var p = pick(tier === 1 ? [10,25,50] : tier === 2 ? [15,20,30,40] : [35,45,60,65]);
+    var newPrice = W - W*p/100;
+    var honest = Math.random() < 0.45;
+    var claim = p;
+    if (!honest){
+      var deltas = [5,10,15,-5,-10];
+      var tries = 0;
+      do { claim = p + pick(deltas); tries++; } while ((claim <= 0 || claim >= 95 || claim === p) && tries < 12);
+      if (claim <= 0 || claim >= 95 || claim === p) claim = p + 10;
+    }
+    var item = pick(ITEMS);
+    return {
+      kind:'claim',
+      facts:{whole:W, percent:p, newPrice:newPrice, claimedPercent:claim, honest:honest},
+      sign:'<div class="sign-top"><span class="sign-icon">' + item.icon + '</span>' +
+           '<span class="sign-shop">' + item.shop + ' · ОГОЛОШЕННЯ</span></div>' +
+           '<div class="sign-item">' + item.name + '</div>' +
+           '<div class="price-row"><span class="price-old num">' + n(W) + ' ₴</span>' +
+           '<span class="price-new num">' + n(newPrice) + ' ₴</span></div>' +
+           '<div class="claim-note">Крамниця пише:</div>' +
+           '<div style="margin-top:6px;"><span class="badge-claim">ЗНИЖКА ' + claim + '%</span></div>',
+      judge:{
+        question:'Крамниця каже правду?',
+        options:[{label:'Правда', val:true}, {label:'Брехня', val:false}],
+        correct: honest
+      },
+      isLie: !honest,
+      prompt:'А яка знижка насправді?',
+      unit:'%', answer:p,
+      ladder: ['Знижка в гривнях: ' + n(W) + ' − ' + n(newPrice) + ' = <b>' + n(W-newPrice) + ' ₴</b>']
+              .concat(ladderWhatPct(W-newPrice, W, p)),
+      solution:'Знижка ' + n(W-newPrice) + ' ₴ від ' + n(W) + ' ₴ — це <b>' + p + '%</b>' +
+               (honest ? ', оголошення чесне.' : ', а не ' + claim + '%. Крамниця перебільшила.'),
+      checkBack: function(user){
+        var wouldBe = W - W*user/100;
+        return 'Якби знижка була ' + n(user) + '%, ціна стала б <span class="hl">' + n(wouldBe) + ' ₴</span>, а на вивісці — <span class="ok">' + n(newPrice) + ' ₴</span>.';
+      },
+      tape:{whole:W, rightPct:p, unit:'₴', label:'справжня знижка', pctAnswer:true}
+    };
+  }
+
+  function caseCompare(tier){
+    var W1 = pick(WHOLES[Math.min(tier,3)]), p1 = pick(PCTS[Math.min(tier,3)]);
+    var W2, p2, f1, f2, guard = 0;
+    f1 = W1 - W1*p1/100;
+    do {
+      W2 = pick(WHOLES[Math.min(tier,3)]);
+      p2 = pick(PCTS[Math.min(tier,3)]);
+      f2 = W2 - W2*p2/100;
+      guard++;
+    } while ((f1 === f2 || Math.abs(f1-f2) > 400 || W1 === W2) && guard < 40);
+    if (f1 === f2 || Math.abs(f1-f2) > 400 || W1 === W2){
+      var wholes = WHOLES[Math.min(tier,3)], pcts = PCTS[Math.min(tier,3)], found = false;
+      for (var wi=0;wi<wholes.length && !found;wi++){
+        for (var pi=0;pi<pcts.length;pi++){
+          var candidate = wholes[wi] - wholes[wi]*pcts[pi]/100;
+          if (wholes[wi] !== W1 && candidate !== f1 && Math.abs(candidate-f1) <= 400){
+            W2 = wholes[wi]; p2 = pcts[pi]; f2 = candidate; found = true; break;
+          }
+        }
+      }
+    }
+    var cheaper = f1 < f2 ? 'A' : 'B';
+    var item = pick(ITEMS);
+    return {
+      kind:'compare',
+      facts:{wholeA:W1, percentA:p1, finalA:f1, wholeB:W2, percentB:p2, finalB:f2},
+      sign:'<div class="sign-top"><span class="sign-icon">' + item.icon + '</span>' +
+           '<span class="sign-shop">ОДИН ТОВАР · ДВІ КРАМНИЦІ</span></div>' +
+           '<div class="sign-item">' + item.name + '</div>' +
+           '<div class="two-offers">' +
+           '<div class="offer"><span class="offer-name">КРАМНИЦЯ A</span><span class="offer-price num">' + n(W1) + ' ₴</span><span class="offer-disc">−' + p1 + '%</span></div>' +
+           '<div class="offer"><span class="offer-name">КРАМНИЦЯ B</span><span class="offer-price num">' + n(W2) + ' ₴</span><span class="offer-disc">−' + p2 + '%</span></div>' +
+           '</div>',
+      judge:{
+        question:'Де вийде дешевше?',
+        options:[{label:'Крамниця A', val:'A'}, {label:'Крамниця B', val:'B'}],
+        correct: cheaper
+      },
+      prompt:'На скільки гривень дешевше?',
+      unit:'₴', answer: Math.abs(f1-f2),
+      ladder:[
+        'Крамниця A: ' + p1 + '% від ' + n(W1) + ' = ' + n(W1*p1/100) + ', платиш ' + n(W1) + ' − ' + n(W1*p1/100) + ' = <b>' + n(f1) + ' ₴</b>',
+        'Крамниця B: ' + p2 + '% від ' + n(W2) + ' = ' + n(W2*p2/100) + ', платиш ' + n(W2) + ' − ' + n(W2*p2/100) + ' = <b>' + n(f2) + ' ₴</b>',
+        'Різниця: ' + n(Math.max(f1,f2)) + ' − ' + n(Math.min(f1,f2)) + ' = <b>' + n(Math.abs(f1-f2)) + ' ₴</b>'
+      ],
+      solution:'A коштує ' + n(f1) + ' ₴, B — ' + n(f2) + ' ₴. Різниця <b>' + n(Math.abs(f1-f2)) + ' ₴</b>.',
+      checkBack: function(){
+        return 'Порівнюй кінцеві ціни, а не самі відсотки: більший відсоток від меншої ціни може дати менше грошей.';
+      }
+    };
+  }
+
+  function caseWhole(tier){
+    var p = pick(tier <= 2 ? [10,20,25,50] : [20,25,40,75]);
+    var W = pick(WHOLES[Math.min(tier,3)]);
+    while (W % 20 !== 0) W = pick(WHOLES[Math.min(tier,3)]);
+    var part = W*p/100;
+    var d = pick(DEPOSITS);
+    return {
+      kind:'whole',
+      facts:{percent:p, whole:W, part:part},
+      sign:'<div class="sign-top"><span class="sign-icon">' + d.icon + '</span>' +
+           '<span class="sign-shop">КВИТАНЦІЯ</span></div>' +
+           '<div class="label-lines"><span>' + d.text + '</span>' +
+           '<span class="big num">' + n(part) + ' ₴</span>' +
+           '<span>це <b>' + p + '%</b> від повної ціни</span></div>',
+      prompt:'Яка повна ціна?',
+      unit:'₴', answer:W,
+      ladder: ladderWhole(part, p, W),
+      solution: p + '% — це ' + n(part) + ' ₴, тому все ціле — <b>' + n(W) + ' ₴</b>.',
+      checkBack: function(user){
+        var check = Math.round(user*p/100*100)/100;
+        return 'Перевірка: ' + p + '% від ' + n(user) + ' — це <span class="hl">' + n(check) +
+               ' ₴</span>, а в квитанції <span class="ok">' + n(part) + ' ₴</span>.';
+      }
+    };
+  }
+
+  function caseLabel(tier){
+    var L = pick(LABELS);
+    var useFrac = Math.random() < 0.5;
+    if (useFrac){
+      var f = pick(tier <= 2 ? FRACS.slice(0,11) : FRACS);
+      return {
+        kind:'label',
+        facts:{source:'fraction', numerator:f.nn, denominator:f.dd, percent:f.pct},
+        sign:'<div class="sign-top"><span class="sign-icon">' + L.icon + '</span>' +
+             '<span class="sign-shop">ЕТИКЕТКА</span></div>' +
+             '<div class="sign-item">' + L.name + '</div>' +
+             '<div class="label-lines"><span>Склад: ' + L.word + ' — ' +
+             '<b>' + fraction(f.nn, f.dd) + '</b> від ' + L.kind + 'у</span></div>',
+        prompt:'Скільки це відсотків?',
+        unit:'%', answer:f.pct,
+        ladder: ladderFrac(f),
+        solution: fraction(f.nn, f.dd) + ' = ' + fraction(n(f.nn*(100/f.dd)), 100) + ' = <b>' + f.pct + '%</b>',
+        checkBack: function(user){
+          return 'Відсоток — це сотих частин. Твоє число означає дріб ' + fraction(n(user), 100) + '.';
+        }
+      };
+    }
+    var pct = pick(tier <= 2 ? [5,10,15,20,25,30,40,50,60,75] : DECS);
+    var dec = (pct/100).toString().replace('.', ',');
+    return {
+      kind:'label',
+      facts:{source:'decimal', decimal:pct/100, percent:pct},
+      sign:'<div class="sign-top"><span class="sign-icon">' + L.icon + '</span>' +
+           '<span class="sign-shop">ЕТИКЕТКА</span></div>' +
+           '<div class="sign-item">' + L.name + '</div>' +
+           '<div class="label-lines"><span>Склад: ' + L.word + ' — ' +
+           '<b>' + dec + '</b> від ' + L.kind + 'у</span></div>',
+      prompt:'Скільки це відсотків?',
+      unit:'%', answer:pct,
+      ladder:[
+        dec + ' — це ' + n(pct) + ' сотих',
+        'А сота частина і є 1%',
+        'Отже ' + dec + ' = <b>' + pct + '%</b>'
+      ],
+      solution: dec + ' = <b>' + pct + '%</b> (кома переїжджає на два знаки вправо)',
+      checkBack: function(user){
+        return 'Твоє число у вигляді десяткового дробу — це ' + n(user/100).replace('.', ',') + ', а на етикетці ' + dec + '.';
+      }
+    };
+  }
+
+  var GENS = {
+    discount: caseDiscount, claim: caseClaim, compare: caseCompare,
+    whole: caseWhole, label: caseLabel
+  };
+  var POOLS = {
+    1:['discount','label','discount','claim','whole'],
+    2:['discount','claim','whole','label','discount'],
+    3:['claim','discount','whole','compare','label'],
+    4:['compare','claim','whole','discount','claim']
+  };
+
+  /* ================= game state ================= */
+  var shiftLen = 10; /* 0 = без кінця */
+  var G = {
+    caseIdx:0, total:10, done:0, points:0, tier:1, streak:0, bestStreak:0, solo:0, lies:0,
+    upCount:0, cur:null, casePoints:3, hintsShown:0, wrongs:0, lastKind:null,
+    phase:'judge', input:''
+  };
+
+  function tierName(t){ return ['новачок','стажер','інспектор','старший інспектор'][t-1]; }
+  function isLast(){ return isFinite(G.total) && G.caseIdx === G.total - 1; }
+  function bestKey(){ return 'inspector_best_' + (isFinite(G.total) ? G.total : 'inf'); }
+  function bestKeyFor(len){ return 'inspector_best_' + (len ? len : 'inf'); }
+
+  function newCase(){
+    var pool = POOLS[G.tier].filter(function(k){ return k !== G.lastKind; });
+    var kind = pick(pool.length ? pool : POOLS[G.tier]);
+    G.lastKind = kind;
+    G.cur = GENS[kind](G.tier);
+    G.casePoints = 3; G.hintsShown = 0; G.wrongs = 0; G.input = '';
+    G.phase = G.cur.judge ? 'judge' : 'input';
+    render();
+  }
+
+  /* ================= rendering ================= */
+  function renderHeader(){
+    $('case-no').textContent = 'Справа ' + (G.caseIdx+1) + (isFinite(G.total) ? ' з ' + G.total : '');
+    var dots = '';
+    for (var i=1;i<=4;i++) dots += '<span class="tdot' + (i <= G.tier ? ' on' : '') + '"></span>';
+    $('tier-dots').innerHTML = dots;
+    $('tier-text').textContent = tierName(G.tier);
+    $('points-val').textContent = G.points;
+    $('streak').hidden = G.streak < 2;
+    $('streak-n').textContent = G.streak;
+  }
+
+  function renderHints(){
+    var z = $('hint-zone');
+    z.innerHTML = '';
+    for (var i=0;i<G.hintsShown;i++){
+      var d = document.createElement('div');
+      d.className = 'hint-step';
+      d.innerHTML = '<span class="n">' + (i+1) + '</span><span>' + G.cur.ladder[i] + '</span>';
+      z.appendChild(d);
+    }
+    if (G.phase === 'input' && G.hintsShown < G.cur.ladder.length){
+      var b = document.createElement('button');
+      b.className = 'hint-btn';
+      b.id = 'hint-btn';
+      b.textContent = G.hintsShown === 0 ? 'Підказка · −1 бал' : 'Ще крок · −1 бал';
+      b.addEventListener('click', takeHint);
+      z.appendChild(b);
+    }
+  }
+
+  function renderInput(){
+    var iz = $('input-zone'), pz = $('pad-zone');
+    iz.innerHTML = ''; pz.innerHTML = '';
+
+    if (G.phase === 'judge'){
+      $('prompt').innerHTML = G.cur.judge.question + '<small>подумай, перш ніж тиснути</small>';
+      var wrap = document.createElement('div');
+      wrap.className = 'judge';
+      G.cur.judge.options.forEach(function(o, i){
+        var b = document.createElement('button');
+        b.className = 'btn ' + (i === 0 ? 'btn-green' : 'btn-red');
+        b.textContent = o.label;
+        b.addEventListener('click', function(){ answerJudge(o.val); });
+        wrap.appendChild(b);
+      });
+      pz.appendChild(wrap);
+      return;
+    }
+
+    $('prompt').innerHTML = G.cur.prompt + '<small>порахуй в голові й введи число</small>';
+
+    var disp = document.createElement('div');
+    disp.className = 'display' + (G.input ? '' : ' empty');
+    disp.id = 'display';
+    disp.innerHTML = (G.input ? '<span class="num">' + n(Number(G.input)) + '</span>' : '<span>—</span>') +
+                     '<span class="display-unit">' + G.cur.unit + '</span>';
+    iz.appendChild(disp);
+
+    var pad = document.createElement('div');
+    pad.className = 'keypad';
+    ['1','2','3','4','5','6','7','8','9'].forEach(function(d){
+      pad.appendChild(keyBtn(d, function(){ typeDigit(d); }));
+    });
+    pad.appendChild(keyBtn('⌫', delDigit, 'key-del'));
+    pad.appendChild(keyBtn('0', function(){ typeDigit('0'); }));
+    pad.appendChild(keyBtn('✓', submit, 'key-ok'));
+    pz.appendChild(pad);
+  }
+
+  function keyBtn(txt, fn, cls){
+    var b = document.createElement('button');
+    b.className = 'key' + (cls ? ' ' + cls : '');
+    b.textContent = txt;
+    b.addEventListener('click', fn);
+    return b;
+  }
+
+  function render(){
+    renderHeader();
+    $('sign').innerHTML = G.cur.sign;
+    renderHints();
+    renderInput();
+  }
+
+  /* ================= input ================= */
+  function typeDigit(d){
+    if (G.phase !== 'input') return;
+    if (G.input.length >= 5) return;
+    if (G.input === '' && d === '0') return;
+    G.input += d;
+    renderInput();
+  }
+  function delDigit(){
+    if (G.phase !== 'input') return;
+    G.input = G.input.slice(0, -1);
+    renderInput();
+  }
+  function takeHint(){
+    if (G.hintsShown >= G.cur.ladder.length) return;
+    G.hintsShown++;
+    G.casePoints = Math.max(0, G.casePoints - 1);
+    renderHints();
+  }
+
+  function answerJudge(val){
+    var ok = (val === G.cur.judge.correct);
+    if (!ok) G.casePoints = Math.max(0, G.casePoints - 1);
+    if (ok && G.cur.kind === 'claim' && G.cur.isLie) G.lies++;
+    G.phase = 'input';
+    render();
+    var note = document.createElement('div');
+    note.className = 'hint-step';
+    note.style.background = ok ? 'var(--green-soft)' : 'var(--red-soft)';
+    note.innerHTML = '<span class="n" style="background:' + (ok ? 'var(--green)' : 'var(--red)') + '">' +
+                     (ok ? '✓' : '✕') + '</span><span>' +
+                     (ok ? 'Чуйка не підвела. Тепер точне число.'
+                         : 'Не вгадав — але це ще не все. Порахуй точно.') + '</span>';
+    $('hint-zone').insertBefore(note, $('hint-zone').firstChild);
+  }
+
+  function submit(){
+    if (G.phase !== 'input' || G.input === '') return;
+    var user = Number(G.input);
+    if (user === G.cur.answer){ finishCase(true, user); return; }
+
+    G.wrongs++;
+    G.casePoints = Math.max(0, G.casePoints - 1);
+    var d = $('display');
+    if (d){ d.classList.add('shake'); setTimeout(function(){ d.classList.remove('shake'); }, 340); }
+
+    if (G.wrongs >= 2){ finishCase(false, user); return; }
+
+    G.input = '';
+    renderInput();
+    var z = $('hint-zone');
+    var note = document.createElement('div');
+    note.className = 'hint-step';
+    note.style.background = 'var(--red-soft)';
+    note.innerHTML = '<span class="n" style="background:var(--red)">!</span><span>' +
+                     (G.cur.checkBack ? G.cur.checkBack(user) : 'Не те число.') +
+                     ' Спробуй ще раз.</span>';
+    z.insertBefore(note, z.firstChild);
+    if (G.hintsShown === 0 && G.cur.ladder.length){
+      G.hintsShown = 1;
+      renderHints();
+      z.insertBefore(note, z.firstChild);
+    }
+  }
+
+  /* ================= feedback ================= */
+  function miniTape(tape, userPct, rightPct){
+    if (!tape) return '';
+    var u = Math.max(0, Math.min(100, userPct));
+    return '<div class="mini-tape"><div class="mt-bar">' +
+      '<div class="mt-fill" style="width:' + rightPct + '%"></div>' +
+      '<div class="mt-mark right" style="left:' + rightPct + '%"></div>' +
+      (isFinite(userPct) ? '<div class="mt-mark you" style="left:' + u + '%"></div>' : '') +
+      '</div><div class="mt-legend"><span class="right">■ правильно: ' + rightPct + '%</span>' +
+      (isFinite(userPct) ? '<span class="you">■ твоя відповідь: ' + n(Math.round(userPct*10)/10) + '%</span>' : '') +
+      '</div></div>';
+  }
+
+  function finishCase(ok, user){
+    G.phase = 'done';
+    G.done++;
+    if (ok && G.casePoints === 3) G.solo++;
+    if (!ok) G.casePoints = 0;
+
+    var bonus = 0;
+    if (ok && G.casePoints === 3){
+      G.streak++;
+      if (G.streak >= 3) bonus = 1;
+      if (G.streak > G.bestStreak) G.bestStreak = G.streak;
+    } else {
+      G.streak = 0;
+    }
+    G.points += G.casePoints + bonus;
+
+    if (ok && G.casePoints === 3){ G.upCount++; if (G.upCount >= 2){ G.tier = Math.min(4, G.tier+1); G.upCount = 0; } }
+    else if (!ok || G.casePoints <= 1){ G.tier = Math.max(1, G.tier-1); G.upCount = 0; }
+
+    renderHeader();
+
+    var tapeHTML = '';
+    if (G.cur.tape){
+      var rightPct = G.cur.tape.rightPct;
+      var userPct = G.cur.tape.pctAnswer ? user : (user / G.cur.tape.whole * 100);
+      tapeHTML = miniTape(G.cur.tape, ok ? NaN : userPct, rightPct);
+    }
+
+    var title = ok ? (G.casePoints === 3 ? 'Точно!' : 'Правильно') : 'Ось як було';
+    var html =
+      '<div class="fb-head"><span class="fb-mark ' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓' : '✕') + '</span>' +
+      '<span class="fb-title">' + title + '</span>' +
+      '<span class="fb-pts">+' + (G.casePoints + bonus) + (bonus ? ' (серія)' : '') + '</span></div>' +
+      '<div class="fb-body">' + G.cur.solution + '</div>' +
+      (!ok && G.cur.checkBack ? '<div class="fb-check">' + G.cur.checkBack(user) + '</div>' : '') +
+      tapeHTML +
+      '<button class="btn btn-primary" id="btn-next">' +
+      (isLast() ? 'Підсумок зміни' : 'Наступна справа') + '</button>';
+
+    $('input-zone').innerHTML = '';
+    $('hint-zone').innerHTML = '';
+    $('prompt').textContent = '';
+    var fb = document.createElement('div');
+    fb.className = 'fb';
+    fb.innerHTML = html;
+    $('pad-zone').innerHTML = '';
+    $('pad-zone').appendChild(fb);
+    $('btn-next').addEventListener('click', nextCase);
+    $('btn-next').focus();
+  }
+
+  function nextCase(){
+    if (isLast()){ showReport(); return; }
+    G.caseIdx++;
+    newCase();
+  }
+
+  /* ================= screens ================= */
+  function show(name){
+    $('catalog-link').hidden = name === 'play';
+    $('screen-menu').hidden = name !== 'menu';
+    $('screen-play').hidden = name !== 'play';
+    $('screen-report').hidden = name !== 'report';
+  }
+
+  function startShift(){
+    G.total = shiftLen ? shiftLen : Infinity;
+    G.caseIdx = 0; G.done = 0; G.points = 0; G.tier = 1; G.streak = 0; G.bestStreak = 0;
+    G.solo = 0; G.lies = 0; G.upCount = 0; G.lastKind = null;
+    show('play');
+    newCase();
+  }
+
+  function showReport(){
+    var key = bestKey();
+    var best = store(key) || 0;
+    if (G.points > best) store(key, G.points);
+    $('rep-score').innerHTML = G.points + '<small> балів</small>';
+    $('rep-best').textContent = (G.points > best ? 'Новий рекорд! ' : 'Рекорд: ' + best + ' · ') +
+                                'рівень: ' + tierName(G.tier);
+    $('rep-cases').textContent = G.done;
+    $('rep-solo').textContent = G.solo;
+    $('rep-lies').textContent = G.lies;
+    $('rep-streak').textContent = G.bestStreak;
+    var share = G.done ? G.solo / G.done : 0;
+    var msg;
+    if (share >= 0.8) msg = 'Майже все — без підказок. Ти рахуєш відсотки в голові швидше, ніж крамниці встигають їх вигадувати.';
+    else if (share >= 0.5) msg = 'Добра зміна. Найкраще виходить, коли спершу знаходиш 10% — далі все збирається саме.';
+    else msg = 'Головне правило інспектора: спочатку 10% (поділи на 10), потім склади потрібну кількість. Спробуй ще зміну.';
+    $('rep-msg').textContent = msg;
+    show('report');
+  }
+
+  function updateBest(){
+    var best = store(bestKeyFor(shiftLen)) || 0;
+    $('best-line').textContent = best ? 'Твій рекорд у цьому режимі: ' + best + ' балів' : '';
+  }
+
+  /* ================= wiring ================= */
+  $('btn-start').addEventListener('click', startShift);
+  $('rep-again').addEventListener('click', startShift);
+  $('rep-menu').addEventListener('click', function(){ updateBest(); show('menu'); });
+  $('btn-quit').addEventListener('click', function(){
+    if (G.done > 0){ showReport(); return; }
+    updateBest(); show('menu');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.seg-btn'), function(b){
+    b.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.seg-btn'), function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      shiftLen = Number(b.getAttribute('data-len'));
+      updateBest();
+    });
+  });
+  $('btn-cheat').addEventListener('click', function(){ $('cheat').hidden = false; });
+  $('rep-cheat').addEventListener('click', function(){ $('cheat').hidden = false; });
+  $('cheat-close').addEventListener('click', function(){ $('cheat').hidden = true; });
+  $('cheat').addEventListener('click', function(e){ if (e.target === $('cheat')) $('cheat').hidden = true; });
+
+  document.addEventListener('keydown', function(e){
+    if ($('screen-play').hidden) return;
+    if (G.phase === 'input'){
+      if (/^[0-9]$/.test(e.key)) { typeDigit(e.key); e.preventDefault(); }
+      else if (e.key === 'Backspace'){ delDigit(); e.preventDefault(); }
+      else if (e.key === 'Enter'){ submit(); e.preventDefault(); }
+    } else if (G.phase === 'done' && e.key === 'Enter'){
+      var b = $('btn-next'); if (b) b.click();
+    }
+  });
+
+  updateBest();
+
+  /* test hook: lets automated checks generate many cases */
+  window.__inspector = {
+    gens: GENS,
+    generate: function(kind, tier){ return GENS[kind](tier); },
+    state: function(){ return G; }
+  };
+})();
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@
     { "id": "fractions", "label": "Звичайні дроби", "group": "topic" },
     { "id": "geometry", "label": "Геометрія", "group": "topic" },
     { "id": "natural-numbers", "label": "Натуральні числа", "group": "topic" },
+    { "id": "percentages", "label": "Відсотки", "group": "topic" },
     { "id": "word-problems", "label": "Текстові задачі", "group": "topic" },
     { "id": "game", "label": "Гра", "group": "format" },
     { "id": "lesson", "label": "Урок", "group": "format" }
@@ -48,6 +49,15 @@
       "path": "activities/math/06-grade5-lighthouse/",
       "summary": "Шість завдань з математики 5 класу, які крок за кроком засвічують маяк.",
       "tags": ["review", "decimals", "divisibility", "equations", "fractions", "geometry", "natural-numbers", "word-problems", "game"]
+    },
+    {
+      "id": "percentage-inspector",
+      "title": "Інспектор відсотків",
+      "subject": "math",
+      "grades": [6],
+      "path": "activities/math/06-percentage-inspector/",
+      "summary": "Адаптивна практика з відсотками: знижки, пошук цілого, порівняння пропозицій і перетворення дробів та десяткових чисел.",
+      "tags": ["percentages", "game"]
     },
     {
       "id": "grade4-lighthouse",
