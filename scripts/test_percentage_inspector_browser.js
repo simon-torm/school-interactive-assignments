@@ -60,6 +60,75 @@ async function assertNoHorizontalClip(page, label) {
   assert.ok(dimensions.document <= dimensions.viewport + 1, `${label}: no horizontal clipping (${dimensions.document}/${dimensions.viewport})`);
 }
 
+async function assertFractionGeometry(page, label) {
+  const measurements = await page.evaluate(() => {
+    const fraction = (numerator, denominator) =>
+      `<span class="fraction" role="math" aria-label="${numerator} поділити на ${denominator}">` +
+      `<span class="fraction-num" aria-hidden="true">${numerator}</span>` +
+      '<span class="fraction-bar" aria-hidden="true"></span>' +
+      `<span class="fraction-den" aria-hidden="true">${denominator}</span></span>`;
+    const values = [[1, 4], [3, 20], [17, 20], [40, 100]];
+    const row = (context, numerator, denominator) =>
+      `<span data-case="${context}-${numerator}-${denominator}" style="display:block;white-space:nowrap">` +
+      `<span class="fraction-prefix">Перевір ${numerator} з ${denominator}: </span>` +
+      `${fraction(numerator, denominator)}<span> у цьому рядку.</span></span>`;
+
+    const rect = (node) => {
+      const box = node.getBoundingClientRect();
+      return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    const contexts = [
+      { name: 'label', root: document.querySelector('#sign'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="label-lines">${rows}</div>` },
+      { name: 'cheat', root: document.querySelector('#cheat .cheat-note:last-of-type'), reveal: document.querySelector('#cheat'), wrap: (rows) => rows },
+      { name: 'prompt', root: document.querySelector('#prompt'), reveal: document.querySelector('#screen-play'), wrap: (rows) => rows },
+      { name: 'hint', root: document.querySelector('#hint-zone'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="hint-step">${rows}</div>` },
+      { name: 'feedback', root: document.querySelector('#pad-zone'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="fb"><div class="fb-check">${rows}</div></div>` },
+      { name: 'solution', root: document.querySelector('#pad-zone'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="fb"><div class="fb-body">${rows}</div></div>` },
+    ];
+    const results = [];
+    for (const context of contexts) {
+      const original = { html: context.root.innerHTML, style: context.root.getAttribute('style'), hidden: context.reveal.hidden };
+      context.reveal.hidden = false;
+      context.root.style.cssText = 'position:fixed;left:0;top:0;width:480px;z-index:-1;opacity:0;pointer-events:none;';
+      context.root.innerHTML = context.wrap(values.map(([numerator, denominator]) => row(context.name, numerator, denominator)).join(''));
+      for (const container of context.root.querySelectorAll('[data-case]')) {
+        const fractionNode = container.querySelector('.fraction');
+        results.push({
+          name: container.dataset.case,
+          fraction: rect(fractionNode),
+          text: rect(container.querySelector('.fraction-prefix')),
+          numerator: rect(fractionNode.querySelector('.fraction-num')),
+          bar: rect(fractionNode.querySelector('.fraction-bar')),
+          denominator: rect(fractionNode.querySelector('.fraction-den')),
+        });
+      }
+      context.root.innerHTML = original.html;
+      if (original.style === null) context.root.removeAttribute('style');
+      else context.root.setAttribute('style', original.style);
+      context.reveal.hidden = original.hidden;
+    }
+    return results;
+  });
+
+  assert.equal(measurements.length, 24, `${label}: four representative fractions render in all six real UI contexts`);
+  for (const measurement of measurements) {
+    const prefix = `${label}/${measurement.name}`;
+    const fractionCenter = (measurement.fraction.top + measurement.fraction.bottom) / 2;
+    const textCenter = (measurement.text.top + measurement.text.bottom) / 2;
+    assert.ok(Math.abs(fractionCenter - textCenter) <= 2, `${prefix}: fraction is vertically centered within two CSS pixels (${fractionCenter}/${textCenter})`);
+    for (const [partName, part] of [['numerator', measurement.numerator], ['denominator', measurement.denominator]]) {
+      const leftOverhang = part.left - measurement.bar.left;
+      const rightOverhang = measurement.bar.right - part.right;
+      assert.ok(Math.abs(leftOverhang - rightOverhang) <= 0.5, `${prefix}: ${partName} is horizontally centered on the bar`);
+    }
+    assert.ok(measurement.bar.width >= measurement.numerator.width && measurement.bar.width >= measurement.denominator.width,
+      `${prefix}: bar spans the widest number`);
+    const upperGap = measurement.bar.top - measurement.numerator.bottom;
+    const lowerGap = measurement.denominator.top - measurement.bar.bottom;
+    assert.ok(Math.abs(upperGap - lowerGap) <= 0.5, `${prefix}: numerator and denominator are vertically balanced around the bar`);
+  }
+}
+
 async function openFromCatalog(page, base, label) {
   await page.goto(base, { waitUntil: 'networkidle' });
   await page.locator('#chooser-view:not([hidden])').waitFor();
@@ -184,6 +253,7 @@ async function runEngine(name, browserType, base, live) {
         const scheme = await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         assert.equal(scheme, colorScheme, `${label}: requested theme active`);
         assert.equal(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), true, `${label}: reduced motion active`);
+        await assertFractionGeometry(page, label);
         if (viewportName === 'desktop' && colorScheme === 'light') await exerciseFiniteFlow(page);
         assert.deepEqual(errors, [], `${label}: zero console, request, and response failures`);
         await context.close();
