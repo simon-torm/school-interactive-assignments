@@ -34,6 +34,15 @@ const context = { Math: math };
 vm.runInNewContext(generatorCore, context, { filename: 'percentage-inspector-generator-core.js' });
 const core = context.__core;
 const kinds = ['discount', 'claim', 'compare', 'whole', 'label'];
+const generatedCopy = [];
+const copyCoverage = {
+  discountAskPay: new Set(),
+  claimHonest: new Set(),
+  labelSources: new Set(),
+  labelNames: new Set(),
+  labelQuarterMeasures: new Set(),
+  wholePercents: new Set(),
+};
 
 function plain(value) {
   return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -61,10 +70,19 @@ function verify(item, tier, label) {
   assert.ok(Array.isArray(item.ladder) && item.ladder.length >= 1, `${label}: non-empty hint ladder`);
   assert.ok(item.ladder.every((step) => typeof step === 'string' && plain(step).length > 4), `${label}: useful hint steps`);
   assert.ok(typeof item.solution === 'string' && plain(item.solution).length > 5, `${label}: solution exists`);
+  const textSurfaces = [item.sign, item.prompt, item.solution, ...item.ladder];
+  if (item.judge) textSurfaces.push(item.judge.question, ...item.judge.options.map((option) => option.label));
+  if (item.checkBack) textSurfaces.push(item.checkBack(17));
+  const generatedText = textSurfaces.map(plain).join(' | ');
+  generatedCopy.push(generatedText);
+  assert.doesNotMatch(generatedText, /вагау|об’єм[ау]у|\b(?:undefined|null|NaN)\b/i, `${label}: no malformed generated words or leaked values`);
+  assert.doesNotMatch(generatedText, / {2,}|[,.!?]{2,}/, `${label}: no spacing or punctuation artifacts`);
 
   if (item.kind === 'discount') {
+    copyCoverage.discountAskPay.add(String(item.facts.askPay));
     assert.equal(item.facts.cut, item.facts.whole * item.facts.percent / 100, `${label}: exact discount`);
   } else if (item.kind === 'claim') {
+    copyCoverage.claimHonest.add(String(item.facts.honest));
     assert.equal(item.judge.correct, item.facts.honest, `${label}: honesty judgment`);
     assert.equal(item.isLie, !item.facts.honest, `${label}: lie counter flag`);
     assert.equal(item.facts.claimedPercent === item.facts.percent, item.facts.honest, `${label}: displayed claim consistency`);
@@ -77,8 +95,18 @@ function verify(item, tier, label) {
     assert.equal(item.judge.correct, finalA < finalB ? 'A' : 'B', `${label}: comparison winner`);
     assert.ok(item.answer <= 400, `${label}: comparison remains mentally manageable`);
   } else if (item.kind === 'whole') {
+    copyCoverage.wholePercents.add(item.facts.percent);
     assert.equal(item.facts.part, item.facts.whole * item.facts.percent / 100, `${label}: part is derived from whole`);
   } else if (item.kind === 'label') {
+    copyCoverage.labelSources.add(item.facts.source);
+    const labelName = plain(item.sign).match(/ЕТИКЕТКА (.*?) У складі:/)?.[1];
+    assert.ok(labelName, `${label}: label uses the natural “У складі:” template`);
+    copyCoverage.labelNames.add(labelName);
+    if (item.facts.source === 'fraction' && item.facts.numerator === 1 && item.facts.denominator === 4) {
+      const measure = plain(item.sign).match(/ від (об’єму|ваги)$/)?.[1];
+      assert.ok(measure, `${label}: quarter label ends with an explicit grammatical measure form`);
+      copyCoverage.labelQuarterMeasures.add(measure);
+    }
     assert.ok(item.facts.source === 'fraction' || item.facts.source === 'decimal', `${label}: known label representation`);
     if (item.facts.source === 'fraction') {
       assert.match(item.sign, /class="fraction"/, `${label}: displayed source uses stacked fraction markup`);
@@ -109,6 +137,16 @@ for (let seed = 0; seed < 2500; seed += 1) {
     assert.equal(JSON.stringify(first), JSON.stringify(replay), `${seed}: deterministic replay`);
   }
 }
+
+assert.deepEqual([...copyCoverage.discountAskPay].sort(), ['false', 'true'], 'discount copy covers amount saved and amount paid branches');
+assert.deepEqual([...copyCoverage.claimHonest].sort(), ['false', 'true'], 'claim copy covers honest and dishonest branches');
+assert.deepEqual([...copyCoverage.labelSources].sort(), ['decimal', 'fraction'], 'label copy covers decimal and fraction branches');
+assert.deepEqual([...copyCoverage.labelNames].sort(), ['Лимонад', 'Мультифруктовий сік', 'Пластівці', 'Шампунь', 'Шоколад'].sort(), 'every product label is generated');
+assert.deepEqual([...copyCoverage.labelQuarterMeasures].sort(), ['ваги', 'об’єму'], 'quarter labels cover both explicit grammatical measure forms');
+assert.deepEqual([...copyCoverage.wholePercents].sort((a, b) => a - b), [10, 20, 25, 40, 50, 75], 'whole-from-percent copy covers every percentage template');
+assert.ok(generatedCopy.some((text) => text.includes('Відсоток показує кількість сотих частин.')), 'fraction retry feedback states the mathematical meaning grammatically');
+assert.ok(generatedCopy.some((text) => text.includes('поділи 40 на 2')), 'whole-from-20% hint uses an unambiguous division instruction');
+assert.ok(generatedCopy.some((text) => text.includes('Скільки таких частин у')), 'part-to-percent hint uses natural terminology');
 
 assert.equal((html.match(/class="catalog-link"/g) || []).length, 1, 'exactly one catalog return link');
 assert.match(html, /<a class="catalog-link"[^>]*href="\.\.\/\.\.\/\.\.\/"[^>]*>.*До каталогу<\/a>/s, 'catalog link targets the repository root');

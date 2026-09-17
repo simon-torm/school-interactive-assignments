@@ -328,12 +328,12 @@
   <section class="screen menu" id="screen-menu">
     <span class="menu-badge">ЗМІНА ПОЧИНАЄТЬСЯ</span>
     <h1 class="menu-title">Інспектор відсотків</h1>
-    <p class="menu-sub">Крамниці обіцяють знижки, етикетки — склад. Твоя робота — перевірити, чи не брешуть. Рахувати доведеться в голові.</p>
+    <p class="menu-sub">Крамниці обіцяють знижки, а етикетки показують склад. Твоя робота — перевірити, чи не брешуть. Рахувати доведеться в голові.</p>
 
     <div class="rules">
       <div class="rule"><span class="rule-n">1</span><span>Спершу <b>порахуй сам</b> і введи відповідь — варіантів немає, вгадати не вийде.</span></div>
       <div class="rule"><span class="rule-n">2</span><span>Застряг — бери <b>підказку</b>: вона показує один крок. Але бали за неї знімаються.</span></div>
-      <div class="rule"><span class="rule-n">3</span><span>Йде добре — справи <b>стають складнішими</b>. Помиляєшся — легшими.</span></div>
+      <div class="rule"><span class="rule-n">3</span><span>Справляєшся добре — справи <b>стають складнішими</b>. Помиляєшся — легшими.</span></div>
     </div>
 
     <div class="menu-actions">
@@ -385,7 +385,7 @@
       <div class="best" id="rep-best"></div>
     </div>
     <div class="rep-grid">
-      <div class="rep-cell"><div class="rep-val num" id="rep-cases">0</div><div class="rep-lab">справ пройдено</div></div>
+      <div class="rep-cell"><div class="rep-val num" id="rep-cases">0</div><div class="rep-lab">справ завершено</div></div>
       <div class="rep-cell"><div class="rep-val num" id="rep-solo">0</div><div class="rep-lab">без підказок</div></div>
       <div class="rep-cell"><div class="rep-val num" id="rep-lies">0</div><div class="rep-lab">брехень викрито</div></div>
       <div class="rep-cell"><div class="rep-val num" id="rep-streak">0</div><div class="rep-lab">найдовша серія</div></div>
@@ -408,9 +408,9 @@
     <div class="cheat-row"><span class="cheat-k">50%</span><span class="cheat-v">Половина. <b>50% від 480 = 240</b></span></div>
     <div class="cheat-row"><span class="cheat-k">25%</span><span class="cheat-v">Чверть, тобто поділи на 4. <b>25% від 480 = 120</b></span></div>
     <div class="cheat-row"><span class="cheat-k">5%</span><span class="cheat-v">Половина від 10%. <b>5% від 480 = 24</b></span></div>
-    <p class="cheat-note">Будь-який відсоток збирається з цих: <b>35% = 10+10+10+5</b>, або коротше — <b>25% + 10%</b>.</p>
+    <p class="cheat-note">Будь-який потрібний відсоток можна скласти з цих значень: <b>35% = 10% + 10% + 10% + 5%</b>, або коротше — <b>25% + 10%</b>.</p>
     <p class="cheat-note">Назад, до цілого: якщо <b>20% — це 30</b>, то 10% — це 15, а все ціле — 150.</p>
-    <p class="cheat-note">Дріб у відсотки: доведи знаменник до 100. <b><span class="fraction" role="math" aria-label="2 поділити на 5"><span class="fraction-num" aria-hidden="true">2</span><span class="fraction-bar" aria-hidden="true"></span><span class="fraction-den" aria-hidden="true">5</span></span> = <span class="fraction" role="math" aria-label="40 поділити на 100"><span class="fraction-num" aria-hidden="true">40</span><span class="fraction-bar" aria-hidden="true"></span><span class="fraction-den" aria-hidden="true">100</span></span> = 40%</b>. Десятковий: <b>0,35 = 35 сотих = 35%</b>.</p>
+    <p class="cheat-note">Дріб у відсотки: доведи знаменник до 100. <b><span class="fraction" role="math" aria-label="2 поділити на 5"><span class="fraction-num" aria-hidden="true">2</span><span class="fraction-bar" aria-hidden="true"></span><span class="fraction-den" aria-hidden="true">5</span></span> = <span class="fraction" role="math" aria-label="40 поділити на 100"><span class="fraction-num" aria-hidden="true">40</span><span class="fraction-bar" aria-hidden="true"></span><span class="fraction-den" aria-hidden="true">100</span></span> = 40%</b>. Десятковий дріб: <b>0,35 = 35 сотих = 35%</b>.</p>
     <button class="btn btn-primary" id="cheat-close">Зрозуміло</button>
   </div>
 </div>
@@ -428,6 +428,13 @@
     var parts = s.split(',');
     if (parts[0].length > 3) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return parts.join(',');
+  }
+  function pointsWord(value){
+    var lastTwo = Math.abs(value) % 100, last = lastTwo % 10;
+    if (lastTwo >= 11 && lastTwo <= 14) return 'балів';
+    if (last === 1) return 'бал';
+    if (last >= 2 && last <= 4) return 'бали';
+    return 'балів';
   }
   function fraction(nn, dd){
     return '<span class="fraction" role="math" aria-label="' + nn + ' поділити на ' + dd + '">' +
@@ -457,11 +464,11 @@
   ];
 
   var LABELS = [
-    {icon:'🧃', name:'Сік мультифрукт', unit:'мл', word:'соку', kind:'об’єм'},
-    {icon:'🍫', name:'Шоколад', unit:'г', word:'какао', kind:'вага'},
-    {icon:'🥣', name:'Пластівці', unit:'г', word:'цукру', kind:'вага'},
-    {icon:'🧴', name:'Шампунь', unit:'мл', word:'екстракту', kind:'об’єм'},
-    {icon:'🥤', name:'Лимонад', unit:'мл', word:'соку', kind:'об’єм'}
+    {icon:'🧃', name:'Мультифруктовий сік', component:'фруктовий сік', measure:'об’єму'},
+    {icon:'🍫', name:'Шоколад', component:'какао', measure:'ваги'},
+    {icon:'🥣', name:'Пластівці', component:'цукор', measure:'ваги'},
+    {icon:'🧴', name:'Шампунь', component:'екстракт', measure:'об’єму'},
+    {icon:'🥤', name:'Лимонад', component:'сік', measure:'об’єму'}
   ];
 
   var DEPOSITS = [
@@ -539,7 +546,7 @@
       steps.push('10% — це десята частина цілого');
       steps.push('10 × ' + n(part) + ' = <b>' + n(whole) + '</b>');
     } else {
-      steps.push(p + '% — це ' + n(part) + ', тож 10% буде в ' + (p/10) + ' рази менше: ' +
+      steps.push(p + '% — це ' + n(part) + '. Щоб знайти 10%, поділи ' + n(part) + ' на ' + (p/10) + ': ' +
                  n(part) + ' : ' + (p/10) + ' = <b>' + n(whole/10) + '</b>');
       steps.push('Ціле — це 10 разів по 10%: 10 × ' + n(whole/10) + ' = <b>' + n(whole) + '</b>');
     }
@@ -549,7 +556,7 @@
   function ladderWhatPct(part, whole, pct){
     return [
       '1% від ' + n(whole) + ' — це ' + n(whole) + ' : 100 = <b>' + n(whole/100) + '</b>',
-      'Скільки таких одиничок у ' + n(part) + '? ' + n(part) + ' : ' + n(whole/100) + ' = <b>' + pct + '</b>',
+      'Скільки таких частин у ' + n(part) + '? ' + n(part) + ' : ' + n(whole/100) + ' = <b>' + pct + '</b>',
       'Отже це <b>' + pct + '%</b>'
     ];
   }
@@ -726,14 +733,14 @@
         sign:'<div class="sign-top"><span class="sign-icon">' + L.icon + '</span>' +
              '<span class="sign-shop">ЕТИКЕТКА</span></div>' +
              '<div class="sign-item">' + L.name + '</div>' +
-             '<div class="label-lines"><span>Склад: ' + L.word + ' — ' +
-             '<b>' + fraction(f.nn, f.dd) + '</b> від ' + L.kind + 'у</span></div>',
+             '<div class="label-lines"><span>У складі: ' + L.component + ' — ' +
+             '<b>' + fraction(f.nn, f.dd) + '</b> від ' + L.measure + '</span></div>',
         prompt:'Скільки це відсотків?',
         unit:'%', answer:f.pct,
         ladder: ladderFrac(f),
         solution: fraction(f.nn, f.dd) + ' = ' + fraction(n(f.nn*(100/f.dd)), 100) + ' = <b>' + f.pct + '%</b>',
         checkBack: function(user){
-          return 'Відсоток — це сотих частин. Твоє число означає дріб ' + fraction(n(user), 100) + '.';
+          return 'Відсоток показує кількість сотих частин. Твоє число означає дріб ' + fraction(n(user), 100) + '.';
         }
       };
     }
@@ -745,8 +752,8 @@
       sign:'<div class="sign-top"><span class="sign-icon">' + L.icon + '</span>' +
            '<span class="sign-shop">ЕТИКЕТКА</span></div>' +
            '<div class="sign-item">' + L.name + '</div>' +
-           '<div class="label-lines"><span>Склад: ' + L.word + ' — ' +
-           '<b>' + dec + '</b> від ' + L.kind + 'у</span></div>',
+           '<div class="label-lines"><span>У складі: ' + L.component + ' — ' +
+           '<b>' + dec + '</b> від ' + L.measure + '</span></div>',
       prompt:'Скільки це відсотків?',
       unit:'%', answer:pct,
       ladder:[
@@ -803,6 +810,7 @@
     $('tier-dots').innerHTML = dots;
     $('tier-text').textContent = tierName(G.tier);
     $('points-val').textContent = G.points;
+    document.querySelector('.points-lab').textContent = pointsWord(G.points);
     $('streak').hidden = G.streak < 2;
     $('streak-n').textContent = G.streak;
   }
@@ -986,7 +994,7 @@
       tapeHTML = miniTape(G.cur.tape, ok ? NaN : userPct, rightPct);
     }
 
-    var title = ok ? (G.casePoints === 3 ? 'Точно!' : 'Правильно') : 'Ось як було';
+    var title = ok ? (G.casePoints === 3 ? 'Точно!' : 'Правильно') : 'Ось правильний розв’язок';
     var html =
       '<div class="fb-head"><span class="fb-mark ' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓' : '✕') + '</span>' +
       '<span class="fb-title">' + title + '</span>' +
@@ -1035,7 +1043,7 @@
     var key = bestKey();
     var best = store(key) || 0;
     if (G.points > best) store(key, G.points);
-    $('rep-score').innerHTML = G.points + '<small> балів</small>';
+    $('rep-score').innerHTML = G.points + '<small> ' + pointsWord(G.points) + '</small>';
     $('rep-best').textContent = (G.points > best ? 'Новий рекорд! ' : 'Рекорд: ' + best + ' · ') +
                                 'рівень: ' + tierName(G.tier);
     $('rep-cases').textContent = G.done;
@@ -1053,7 +1061,7 @@
 
   function updateBest(){
     var best = store(bestKeyFor(shiftLen)) || 0;
-    $('best-line').textContent = best ? 'Твій рекорд у цьому режимі: ' + best + ' балів' : '';
+    $('best-line').textContent = best ? 'Твій рекорд у цьому режимі: ' + best + ' ' + pointsWord(best) : '';
   }
 
   /* ================= wiring ================= */

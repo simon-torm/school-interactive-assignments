@@ -129,6 +129,148 @@ async function assertFractionGeometry(page, label) {
   }
 }
 
+async function assertGeneratedUkrainianCopy(page, label) {
+  const audit = await page.evaluate(() => {
+    const root = document.createElement('div');
+    root.hidden = true;
+    document.body.appendChild(root);
+    const normalize = (value) => value.replace(/\s+/g, ' ').trim();
+    const labelCoverage = {};
+    const malformed = [];
+    const branchCoverage = {
+      discountAskPay: new Set(),
+      claimHonest: new Set(),
+      labelSources: new Set(),
+      wholePercents: new Set(),
+    };
+    const quarterExamples = {};
+
+    for (let seed = 0; seed < 2500; seed += 1) {
+      for (let tier = 1; tier <= 4; tier += 1) {
+        for (const kind of ['discount', 'claim', 'compare', 'whole', 'label']) {
+          window.__setInspectorSeed(seed * 32 + tier * 8 + kind.length);
+          const item = window.__inspector.generate(kind, tier);
+          const surfaces = [item.sign, item.prompt, item.solution, ...item.ladder];
+          if (item.judge) surfaces.push(item.judge.question, ...item.judge.options.map((option) => option.label));
+          if (item.checkBack) surfaces.push(item.checkBack(17));
+          root.innerHTML = surfaces.map((surface) => `<section>${surface}</section>`).join('');
+          const text = normalize(root.textContent);
+          if (/вагау|об’єм[ау]у|\b(?:undefined|null|NaN)\b/i.test(text) || / {2,}|\s+[,.!?]|[,.!?]{2,}/.test(text)) {
+            malformed.push({ seed, tier, kind, text });
+          }
+          if (kind === 'discount') branchCoverage.discountAskPay.add(String(item.facts.askPay));
+          if (kind === 'claim') branchCoverage.claimHonest.add(String(item.facts.honest));
+          if (kind === 'whole') branchCoverage.wholePercents.add(item.facts.percent);
+          if (kind === 'label') {
+            branchCoverage.labelSources.add(item.facts.source);
+            root.innerHTML = item.sign;
+            const product = normalize(root.querySelector('.sign-item').textContent);
+            labelCoverage[product] ||= new Set();
+            labelCoverage[product].add(item.facts.source);
+            if (item.facts.source === 'fraction' && item.facts.numerator === 1 && item.facts.denominator === 4) {
+              const line = root.querySelector('.label-lines span');
+              const fraction = line.querySelector('.fraction');
+              quarterExamples[product] = {
+                aria: fraction.getAttribute('aria-label'),
+                prefix: normalize(line.childNodes[0].textContent),
+                suffix: normalize(line.childNodes[line.childNodes.length - 1].textContent),
+              };
+            }
+          }
+        }
+      }
+    }
+    root.remove();
+    return {
+      malformed,
+      labelCoverage: Object.fromEntries(Object.entries(labelCoverage).map(([key, value]) => [key, [...value].sort()])),
+      quarterExamples,
+      branchCoverage: Object.fromEntries(Object.entries(branchCoverage).map(([key, value]) => [
+        key,
+        [...value].sort(key === 'wholePercents' ? (a, b) => a - b : undefined),
+      ])),
+    };
+  });
+
+  assert.deepEqual(audit.malformed, [], `${label}: generated DOM text has no malformed words, leaked values, spacing, or punctuation artifacts`);
+  const expectedProducts = ['Лимонад', 'Мультифруктовий сік', 'Пластівці', 'Шампунь', 'Шоколад'];
+  assert.deepEqual(Object.keys(audit.labelCoverage).sort(), expectedProducts.sort(), `${label}: every product label is rendered`);
+  for (const product of expectedProducts) {
+    assert.deepEqual(audit.labelCoverage[product], ['decimal', 'fraction'], `${label}/${product}: decimal and fraction templates render`);
+  }
+  assert.deepEqual(audit.branchCoverage.discountAskPay, ['false', 'true'], `${label}: both discount prompt branches render`);
+  assert.deepEqual(audit.branchCoverage.claimHonest, ['false', 'true'], `${label}: honest and dishonest claim copy renders`);
+  assert.deepEqual(audit.branchCoverage.labelSources, ['decimal', 'fraction'], `${label}: both label source branches render`);
+  assert.deepEqual(audit.branchCoverage.wholePercents, [10, 20, 25, 40, 50, 75], `${label}: every whole-from-percent wording branch renders`);
+  const examples = Object.values(audit.quarterExamples);
+  assert.ok(examples.some((example) => example.aria === '1 поділити на 4' && example.suffix === 'від об’єму'), `${label}: rendered DOM includes an accessible 1/4 від об’єму label`);
+  assert.ok(examples.some((example) => example.aria === '1 поділити на 4' && example.suffix === 'від ваги'), `${label}: rendered DOM includes an accessible 1/4 від ваги label`);
+  assert.ok(examples.every((example) => example.prefix.startsWith('У складі:')), `${label}: every quarter example uses natural label wording`);
+}
+
+async function assertFeedbackAndReportCopy(page, label) {
+  const resolveJudge = async () => {
+    const phase = await page.evaluate(() => window.__inspector.state().phase);
+    if (phase !== 'judge') return;
+    const correctIndex = await page.evaluate(() => {
+      const judge = window.__inspector.state().cur.judge;
+      return judge.options.findIndex((option) => option.val === judge.correct);
+    });
+    await page.locator('.judge .btn').nth(correctIndex).click();
+  };
+  await page.locator('[data-len="10"]').click();
+  await page.locator('#btn-start').click();
+  assert.equal(`${await page.locator('#points-val').textContent()} ${await page.locator('.points-lab').textContent()}`, '0 балів', `${label}: initial active score uses correct point agreement`);
+
+  await resolveJudge();
+  let answer = await page.evaluate(() => window.__inspector.state().cur.answer);
+  await page.keyboard.type(String(answer));
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('.fb-title').textContent(), 'Точно!', `${label}: perfect-answer feedback`);
+  assert.equal(`${await page.locator('#points-val').textContent()} ${await page.locator('.points-lab').textContent()}`, '3 бали', `${label}: updated active score uses correct point agreement`);
+  await page.locator('#btn-next').click();
+
+  await resolveJudge();
+  await page.locator('#hint-btn').click();
+  assert.equal(await page.locator('#hint-btn').textContent(), 'Ще крок · −1 бал', `${label}: progressive hint copy`);
+  answer = await page.evaluate(() => window.__inspector.state().cur.answer);
+  await page.keyboard.type(String(answer));
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('.fb-title').textContent(), 'Правильно', `${label}: assisted-answer feedback`);
+  await page.locator('#btn-next').click();
+
+  await resolveJudge();
+  answer = await page.evaluate(() => window.__inspector.state().cur.answer);
+  const wrong = answer === 1 ? 2 : answer - 1;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await page.keyboard.type(String(wrong));
+    await page.keyboard.press('Enter');
+  }
+  assert.equal(await page.locator('.fb-title').textContent(), 'Ось правильний розв’язок', `${label}: exhausted-retry feedback`);
+  await page.locator('#btn-next').click();
+
+  const reportCases = [
+    { points: 1, solo: 8, expectedScore: '1 бал', expectedMessage: 'Майже все — без підказок. Ти рахуєш відсотки в голові швидше, ніж крамниці встигають їх вигадувати.' },
+    { points: 2, solo: 5, expectedScore: '2 бали', expectedMessage: 'Добра зміна. Найкраще виходить, коли спершу знаходиш 10% — далі все збирається саме.' },
+    { points: 11, solo: 4, expectedScore: '11 балів', expectedMessage: 'Головне правило інспектора: спочатку 10% (поділи на 10), потім склади потрібну кількість. Спробуй ще зміну.' },
+  ];
+  for (let index = 0; index < reportCases.length; index += 1) {
+    const scenario = reportCases[index];
+    await page.evaluate(({ points, solo }) => {
+      Object.assign(window.__inspector.state(), { done: 10, points, solo });
+    }, scenario);
+    await page.locator('#btn-quit').click();
+    assert.equal(normalizeSpaces(await page.locator('#rep-score').textContent()), scenario.expectedScore, `${label}: report uses correct point agreement`);
+    assert.equal(await page.locator('#rep-msg').textContent(), scenario.expectedMessage, `${label}: report message branch ${index + 1}`);
+    if (index < reportCases.length - 1) await page.locator('#rep-again').click();
+  }
+  await page.locator('#rep-menu').click();
+}
+
+function normalizeSpaces(value) {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
 async function openFromCatalog(page, base, label) {
   await page.goto(base, { waitUntil: 'networkidle' });
   await page.locator('#chooser-view:not([hidden])').waitFor();
@@ -246,6 +388,17 @@ async function runEngine(name, browserType, base, live) {
       for (const colorScheme of ['light', 'dark']) {
         const context = await browser.newContext({ viewport, colorScheme, reducedMotion: 'reduce' });
         await context.setExtraHTTPHeaders({ 'Cache-Control': 'no-cache', Pragma: 'no-cache' });
+        await context.addInitScript(() => {
+          let value = 0;
+          window.__setInspectorSeed = (seed) => { value = seed >>> 0; };
+          Math.random = () => {
+            value = (value + 0x6d2b79f5) >>> 0;
+            let next = value;
+            next = Math.imul(next ^ (next >>> 15), next | 1);
+            next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
+            return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+          };
+        });
         const page = await context.newPage();
         const errors = watch(page, base);
         const label = `${name}/${viewportName}/${colorScheme}${live ? '/live' : '/local'}`;
@@ -254,6 +407,8 @@ async function runEngine(name, browserType, base, live) {
         assert.equal(scheme, colorScheme, `${label}: requested theme active`);
         assert.equal(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), true, `${label}: reduced motion active`);
         await assertFractionGeometry(page, label);
+        if (viewportName === 'desktop' && colorScheme === 'light') await assertGeneratedUkrainianCopy(page, label);
+        if (viewportName === 'desktop' && colorScheme === 'light') await assertFeedbackAndReportCopy(page, label);
         if (viewportName === 'desktop' && colorScheme === 'light') await exerciseFiniteFlow(page);
         assert.deepEqual(errors, [], `${label}: zero console, request, and response failures`);
         await context.close();
