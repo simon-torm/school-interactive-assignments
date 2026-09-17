@@ -68,20 +68,20 @@ async function assertFractionGeometry(page, label) {
       '<span class="fraction-bar" aria-hidden="true"></span>' +
       `<span class="fraction-den" aria-hidden="true">${denominator}</span></span>`;
     const values = [[1, 4], [3, 20], [17, 20], [40, 100]];
-    const row = (context, numerator, denominator) =>
+    const row = (context, numerator, denominator, bold) =>
       `<span data-case="${context}-${numerator}-${denominator}" style="display:block;white-space:nowrap">` +
       `<span class="fraction-prefix">Перевір ${numerator} з ${denominator}: </span>` +
-      `${fraction(numerator, denominator)}<span> у цьому рядку.</span></span>`;
+      `${bold ? '<b>' : ''}${fraction(numerator, denominator)}${bold ? '</b>' : ''}` +
+      '<span> у цьому рядку.</span></span>';
 
     const rect = (node) => {
       const box = node.getBoundingClientRect();
       return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
     };
     const contexts = [
-      { name: 'label', root: document.querySelector('#sign'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="label-lines">${rows}</div>` },
-      { name: 'cheat', root: document.querySelector('#cheat .cheat-note:last-of-type'), reveal: document.querySelector('#cheat'), wrap: (rows) => rows },
-      { name: 'prompt', root: document.querySelector('#prompt'), reveal: document.querySelector('#screen-play'), wrap: (rows) => rows },
-      { name: 'hint', root: document.querySelector('#hint-zone'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="hint-step">${rows}</div>` },
+      { name: 'label', root: document.querySelector('#sign'), reveal: document.querySelector('#screen-play'), bold: true, wrap: (rows) => `<div class="label-lines">${rows}</div>` },
+      { name: 'cheat', root: document.querySelector('#cheat .cheat-note:last-of-type'), reveal: document.querySelector('#cheat'), bold: true, wrap: (rows) => rows },
+      { name: 'hint', root: document.querySelector('#hint-zone'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="hint-step"><span class="n">1</span><span>${rows}</span></div>` },
       { name: 'feedback', root: document.querySelector('#pad-zone'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="fb"><div class="fb-check">${rows}</div></div>` },
       { name: 'solution', root: document.querySelector('#pad-zone'), reveal: document.querySelector('#screen-play'), wrap: (rows) => `<div class="fb"><div class="fb-body">${rows}</div></div>` },
     ];
@@ -90,7 +90,7 @@ async function assertFractionGeometry(page, label) {
       const original = { html: context.root.innerHTML, style: context.root.getAttribute('style'), hidden: context.reveal.hidden };
       context.reveal.hidden = false;
       context.root.style.cssText = 'position:fixed;left:0;top:0;width:480px;z-index:-1;opacity:0;pointer-events:none;';
-      context.root.innerHTML = context.wrap(values.map(([numerator, denominator]) => row(context.name, numerator, denominator)).join(''));
+      context.root.innerHTML = context.wrap(values.map(([numerator, denominator]) => row(context.name, numerator, denominator, context.bold)).join(''));
       for (const container of context.root.querySelectorAll('[data-case]')) {
         const fractionNode = container.querySelector('.fraction');
         results.push({
@@ -110,7 +110,7 @@ async function assertFractionGeometry(page, label) {
     return results;
   });
 
-  assert.equal(measurements.length, 24, `${label}: four representative fractions render in all six real UI contexts`);
+  assert.equal(measurements.length, 20, `${label}: four representative fractions render in all five fraction-producing UI contexts`);
   for (const measurement of measurements) {
     const prefix = `${label}/${measurement.name}`;
     const fractionCenter = (measurement.fraction.top + measurement.fraction.bottom) / 2;
